@@ -68,7 +68,11 @@ export function DriverCard() {
 
     try {
       setError(null);
-      await apiService.updateDocument(editingItem.id, editForm.issueDate, editForm.expiryDate);
+      // Při ukládání posíláme jen expiryDate, issueDate zůstává původní
+      const originalItem = data[editingItem.type as keyof typeof data].find(item => item.id === editingItem.id);
+      const originalIssueDate = originalItem ? originalItem.issueDate : '';
+      
+      await apiService.updateDocument(editingItem.id, originalIssueDate, editForm.expiryDate);
       
       // Reload data from API
       await loadDocuments();
@@ -151,38 +155,27 @@ export function DriverCard() {
               
               {editingItem?.type === type && editingItem?.id === item.id ? (
                 <div className="space-y-3">
-                  <div className="space-y-2">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Datum vydání</label>
-                      <input
-                        type="date"
-                        value={editForm.issueDate}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, issueDate: e.target.value }))}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Datum vypršení</label>
-                      <input
-                        type="date"
-                        value={editForm.expiryDate}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, expiryDate: e.target.value }))}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Datum vypršení platnosti</label>
+                    <input
+                      type="date"
+                      value={editForm.expiryDate}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, expiryDate: e.target.value }))}
+                      className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-2">
                     <button 
                       onClick={saveEdit}
-                      className="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="flex-1 px-3 py-2 bg-green-600 text-white rounded text-xs font-medium hover:bg-green-700 focus:outline-none focus:ring-1 focus:ring-green-500"
                     >
-                      Uložit
+                      ✓ Uložit
                     </button>
                     <button 
                       onClick={cancelEdit}
-                      className="px-2 py-1 border border-gray-300 rounded text-xs hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded text-xs font-medium hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     >
-                      Zrušit
+                      ✗ Zrušit
                     </button>
                   </div>
                 </div>
