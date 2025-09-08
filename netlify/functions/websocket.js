@@ -1,5 +1,3 @@
-const { Pool } = require('pg');
-
 // Simple in-memory store for active connections
 // In production, you'd want to use Redis or similar
 const connections = new Map();
