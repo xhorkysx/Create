@@ -149,7 +149,8 @@ export default function App() {
     if (dbInitialized) {
       try {
         await apiService.addTimeEntry(newEntry);
-        // Real-time update will handle the UI refresh
+        // Reload data from database to ensure UI is updated
+        await loadTimeEntries();
       } catch (error) {
         console.error('Error adding entry to database:', error);
         // Fallback to localStorage
@@ -168,7 +169,8 @@ export default function App() {
       if (dbInitialized) {
         try {
           await apiService.deleteTimeEntry(id);
-          // Real-time update will handle the UI refresh
+          // Reload data from database to ensure UI is updated
+          await loadTimeEntries();
         } catch (error) {
           console.error('Error deleting entry from database:', error);
           // Fallback to localStorage
@@ -189,7 +191,8 @@ export default function App() {
     if (dbInitialized) {
       try {
         await apiService.updateTimeEntry(updatedEntry.id, updatedEntry);
-        // Real-time update will handle the UI refresh
+        // Reload data from database to ensure UI is updated
+        await loadTimeEntries();
       } catch (error) {
         console.error('Error updating entry in database:', error);
         // Fallback to localStorage
