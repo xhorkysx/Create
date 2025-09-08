@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TimeEntryForm } from './components/TimeEntryForm';
 import { TimeTrackingTabs } from './components/TimeTrackingTabs';
 import { EditEntryDialog } from './components/EditEntryDialog';
+import { DriverCard } from './components/DriverCard';
 import { Button } from './components/ui/button';
 import { Download, Upload } from 'lucide-react';
 import { useIsMobile } from './components/ui/use-mobile';
@@ -283,7 +284,7 @@ export default function App() {
     </div>
   );
 
-  // Driver card mode component (placeholder)
+  // Driver card mode component
   const DriverCardMode = () => (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -299,16 +300,11 @@ export default function App() {
             <h1>Karta řidiče</h1>
           </div>
           <p className="text-muted-foreground">
-            Správa karty řidiče
+            Správa dokladů, interních dokumentů a přístupů do středisek
           </p>
         </div>
         
-        <div className="text-center py-16">
-          <h2 className="text-2xl font-semibold mb-4">Karta řidiče</h2>
-          <p className="text-muted-foreground">
-            Tato funkce bude implementována později
-          </p>
-        </div>
+        <DriverCard />
       </div>
     </div>
   );
