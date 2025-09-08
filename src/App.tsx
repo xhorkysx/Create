@@ -39,8 +39,6 @@ export default function App() {
 
   // Load time entries from database
   const loadTimeEntries = async () => {
-    if (!dbInitialized) return;
-    
     try {
       const dbEntries = await apiService.getTimeEntries();
       setEntries(dbEntries);
@@ -57,24 +55,28 @@ export default function App() {
         await apiService.initDatabase();
         setDbInitialized(true);
         console.log('Database initialized successfully');
+        
+        // Load data from database
+        await loadTimeEntries();
       } catch (error) {
         console.error('Database initialization failed:', error);
         // Continue with localStorage fallback
         setDbInitialized(false);
-      }
-
-      // Load data from localStorage as fallback
-      const savedEntries = localStorage.getItem('timeTrackingEntries');
-      const savedRate = localStorage.getItem('defaultHourlyRate');
-      const savedSalaries = localStorage.getItem('realSalaries');
-      
-      if (savedEntries) {
-        try {
-          setEntries(JSON.parse(savedEntries));
-        } catch (error) {
-          console.error('Error loading entries:', error);
+        
+        // Load data from localStorage as fallback
+        const savedEntries = localStorage.getItem('timeTrackingEntries');
+        if (savedEntries) {
+          try {
+            setEntries(JSON.parse(savedEntries));
+          } catch (error) {
+            console.error('Error loading entries:', error);
+          }
         }
       }
+
+      // Load other data from localStorage
+      const savedRate = localStorage.getItem('defaultHourlyRate');
+      const savedSalaries = localStorage.getItem('realSalaries');
       
       if (savedRate) {
         setDefaultHourlyRate(parseInt(savedRate));
