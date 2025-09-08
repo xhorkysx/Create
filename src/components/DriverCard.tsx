@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { apiService } from '../services/api';
 
 interface DocumentItem {
   id: string;
@@ -13,115 +14,32 @@ interface DocumentItem {
 export function DriverCard() {
   const [editingItem, setEditingItem] = useState<{ type: string; id: string } | null>(null);
   const [editForm, setEditForm] = useState({ issueDate: '', expiryDate: '' });
-
-  // Initialize data directly in state
   const [data, setData] = useState({
-    documents: [
-      {
-        id: 'id-card',
-        name: 'Občanský průkaz',
-        issueDate: '2020-01-01',
-        expiryDate: '2030-01-01',
-        daysRemaining: 3650,
-        isExpired: false,
-        isExpiringSoon: false
-      },
-      {
-        id: 'driving-license',
-        name: 'Řidičský průkaz',
-        issueDate: '2020-01-01',
-        expiryDate: '2030-01-01',
-        daysRemaining: 3650,
-        isExpired: false,
-        isExpiringSoon: false
-      },
-      {
-        id: 'adr-card',
-        name: 'ADR průkaz',
-        issueDate: '2020-01-01',
-        expiryDate: '2030-01-01',
-        daysRemaining: 3650,
-        isExpired: false,
-        isExpiringSoon: false
-      }
-    ],
-    internal: [
-      {
-        id: 'cybersecurity',
-        name: 'Kybernetická bezpečnost',
-        issueDate: '2020-01-01',
-        expiryDate: '2030-01-01',
-        daysRemaining: 3650,
-        isExpired: false,
-        isExpiringSoon: false
-      },
-      {
-        id: 'health-check',
-        name: 'Zdravotní prohlídka',
-        issueDate: '2020-01-01',
-        expiryDate: '2030-01-01',
-        daysRemaining: 3650,
-        isExpired: false,
-        isExpiringSoon: false
-      },
-      {
-        id: 'compliance',
-        name: 'Compliance',
-        issueDate: '2020-01-01',
-        expiryDate: '2030-01-01',
-        daysRemaining: 3650,
-        isExpired: false,
-        isExpiringSoon: false
-      },
-      {
-        id: 'pc-passwords',
-        name: 'Hesla do PC',
-        issueDate: '2020-01-01',
-        expiryDate: '2030-01-01',
-        daysRemaining: 3650,
-        isExpired: false,
-        isExpiringSoon: false
-      }
-    ],
-    centers: [
-      {
-        id: 'strelice',
-        name: 'Střelice',
-        issueDate: '2020-01-01',
-        expiryDate: '2030-01-01',
-        daysRemaining: 3650,
-        isExpired: false,
-        isExpiringSoon: false
-      },
-      {
-        id: 'slapanov',
-        name: 'Šlapánov',
-        issueDate: '2020-01-01',
-        expiryDate: '2030-01-01',
-        daysRemaining: 3650,
-        isExpired: false,
-        isExpiringSoon: false
-      },
-      {
-        id: 'loukov',
-        name: 'Loukov',
-        issueDate: '2020-01-01',
-        expiryDate: '2030-01-01',
-        daysRemaining: 3650,
-        isExpired: false,
-        isExpiringSoon: false
-      },
-      {
-        id: 'sedlnice',
-        name: 'Sedlnice',
-        issueDate: '2020-01-01',
-        expiryDate: '2030-01-01',
-        daysRemaining: 3650,
-        isExpired: false,
-        isExpiringSoon: false
-      }
-    ]
+    documents: [],
+    internal: [],
+    centers: []
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Načtení dat z API
+  useEffect(() => {
+    loadDocuments();
+  }, []);
+
+  const loadDocuments = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const documents = await apiService.getDocuments();
+      setData(documents);
+    } catch (err) {
+      console.error('Error loading documents:', err);
+      setError('Chyba při načítání dokumentů');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const startEditing = (type: string, id: string) => {
     const item = data[type as keyof typeof data].find(item => item.id === id);
@@ -134,26 +52,22 @@ export function DriverCard() {
     }
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!editingItem) return;
 
-    const updatedData = {
-      ...data,
-      [editingItem.type]: data[editingItem.type as keyof typeof data].map(item =>
-        item.id === editingItem.id
-          ? {
-              ...item,
-              issueDate: editForm.issueDate,
-              expiryDate: editForm.expiryDate,
-              daysRemaining: Math.ceil((new Date(editForm.expiryDate).getTime() - new Date().getTime()) / (1000 * 3600 * 24))
-            }
-          : item
-      )
-    };
-
-    setData(updatedData);
-    setEditingItem(null);
-    setEditForm({ issueDate: '', expiryDate: '' });
+    try {
+      setError(null);
+      await apiService.updateDocument(editingItem.id, editForm.issueDate, editForm.expiryDate);
+      
+      // Reload data from API
+      await loadDocuments();
+      
+      setEditingItem(null);
+      setEditForm({ issueDate: '', expiryDate: '' });
+    } catch (err) {
+      console.error('Error saving document:', err);
+      setError('Chyba při ukládání dokumentu');
+    }
   };
 
   const cancelEdit = () => {
@@ -296,6 +210,34 @@ export function DriverCard() {
       </div>
     );
   };
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <h2 className="text-2xl font-bold mb-6">Karta řidiče</h2>
+        <div className="text-center py-8">
+          <p>Načítání dokumentů...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <h2 className="text-2xl font-bold mb-6">Karta řidiče</h2>
+        <div className="text-center py-8">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={loadDocuments}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Zkusit znovu
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">

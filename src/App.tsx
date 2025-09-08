@@ -4,8 +4,9 @@ import { TimeTrackingTabs } from './components/TimeTrackingTabs';
 import { EditEntryDialog } from './components/EditEntryDialog';
 import { DriverCard } from './components/DriverCard';
 import { Button } from './components/ui/button';
-import { Download, Upload } from 'lucide-react';
+import { Download, Upload, Database } from 'lucide-react';
 import { useIsMobile } from './components/ui/use-mobile';
+import { apiService } from './services/api';
 
 interface TimeEntry {
   id: string;
@@ -31,6 +32,7 @@ export default function App() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [defaultHourlyRate, setDefaultHourlyRate] = useState(250);
   const [realSalaries, setRealSalaries] = useState<{ [key: string]: number }>({});
+  const [dbInitialized, setDbInitialized] = useState(false);
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -133,6 +135,17 @@ export default function App() {
     setEntries(prev => [vacationEntry, ...prev]);
   };
 
+  const initializeDatabase = async () => {
+    try {
+      await apiService.initDatabase();
+      setDbInitialized(true);
+      alert('Databáze byla úspěšně inicializována!');
+    } catch (error) {
+      console.error('Error initializing database:', error);
+      alert('Chyba při inicializaci databáze. Zkontrolujte konzoli prohlížeče.');
+    }
+  };
+
   // Export data to JSON file
   const exportData = () => {
     const data: AppData = {
@@ -155,7 +168,7 @@ export default function App() {
   };
 
   // Import data from JSON file
-  const importData = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const importData = (event: any) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -207,6 +220,22 @@ export default function App() {
             Odpracované hodiny
           </Button>
         </div>
+        
+        {!dbInitialized && (
+          <div className="mt-8 text-center">
+            <p className="text-muted-foreground mb-4">
+              Pro použití databáze je potřeba ji nejdříve inicializovat
+            </p>
+            <Button 
+              onClick={initializeDatabase}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Database className="h-4 w-4" />
+              Inicializovat databázi
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
