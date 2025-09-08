@@ -60,12 +60,13 @@ export const handler = async (event, context) => {
       case 'POST':
         // Přidání nového záznamu
         const newEntry = JSON.parse(event.body);
-        const { id, date, hours, hourlyRate, isHoliday, isVacation } = newEntry;
+        const { date, hours, hourlyRate, isHoliday, isVacation } = newEntry;
         const earnings = hours * hourlyRate;
 
-        await sql`
-          INSERT INTO time_entries (id, date, hours, hourly_rate, earnings, is_holiday, is_vacation)
-          VALUES (${id}, ${date}, ${hours}, ${hourlyRate}, ${earnings}, ${isHoliday || false}, ${isVacation || false})
+        const result = await sql`
+          INSERT INTO time_entries (date, hours, hourly_rate, earnings, is_holiday, is_vacation)
+          VALUES (${date}, ${hours}, ${hourlyRate}, ${earnings}, ${isHoliday || false}, ${isVacation || false})
+          RETURNING id
         `;
 
         return {
@@ -76,7 +77,7 @@ export const handler = async (event, context) => {
           },
           body: JSON.stringify({ 
             message: 'Time entry created successfully',
-            id: id
+            id: result[0].id.toString()
           })
         };
 

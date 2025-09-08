@@ -140,23 +140,27 @@ export default function App() {
   }, [realSalaries]);
 
   const addEntry = async (entryData: Omit<TimeEntry, 'id' | 'earnings'>) => {
-    const newEntry: TimeEntry = {
-      ...entryData,
-      id: Date.now().toString(),
-      earnings: entryData.hours * entryData.hourlyRate
-    };
-    
     if (dbInitialized) {
       try {
-        await apiService.addTimeEntry(newEntry);
+        await apiService.addTimeEntry(entryData);
         // Reload data from database to ensure UI is updated
         await loadTimeEntries();
       } catch (error) {
         console.error('Error adding entry to database:', error);
         // Fallback to localStorage
+        const newEntry: TimeEntry = {
+          ...entryData,
+          id: Date.now().toString(),
+          earnings: entryData.hours * entryData.hourlyRate
+        };
         setEntries(prev => [newEntry, ...prev]);
       }
     } else {
+      const newEntry: TimeEntry = {
+        ...entryData,
+        id: Date.now().toString(),
+        earnings: entryData.hours * entryData.hourlyRate
+      };
       setEntries(prev => [newEntry, ...prev]);
     }
     
