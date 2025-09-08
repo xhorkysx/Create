@@ -53,13 +53,19 @@ export function DriverCard() {
   };
 
   const startEditing = (type: string, id: string) => {
+    console.log('Starting edit for:', type, id);
+    console.log('Available data:', data);
     const item = data[type as keyof typeof data].find(item => item.id === id);
+    console.log('Found item:', item);
     if (item) {
       setEditingItem({ type, id });
       setEditForm({
         issueDate: item.issueDate,
         expiryDate: item.expiryDate
       });
+      console.log('Edit mode activated');
+    } else {
+      console.error('Item not found for editing');
     }
   };
 
@@ -153,7 +159,11 @@ export function DriverCard() {
                 </span>
               </div>
               
-              {editingItem?.type === type && editingItem?.id === item.id ? (
+              {(() => {
+                const isEditing = editingItem?.type === type && editingItem?.id === item.id;
+                console.log('Rendering item:', item.id, 'isEditing:', isEditing, 'editingItem:', editingItem);
+                return isEditing;
+              })() ? (
                 <div className="space-y-3">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Datum vypršení platnosti</label>
