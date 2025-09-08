@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
+import { realtimeService } from '../services/realtime';
 
 interface DocumentItem {
   id: string;
@@ -25,6 +26,16 @@ export function DriverCard() {
   // Načtení dat z API
   useEffect(() => {
     loadDocuments();
+
+    // Subscribe to real-time document updates
+    const unsubscribe = realtimeService.subscribe('documents', (data) => {
+      console.log('Real-time documents update received:', data);
+      loadDocuments(); // Reload documents when changes are detected
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const loadDocuments = async () => {

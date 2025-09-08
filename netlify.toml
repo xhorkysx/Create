@@ -18,3 +18,15 @@ status = 200
 from = "/api/*"
 to = "/.netlify/functions/:splat"
 status = 200
+
+# Real-time events endpoint
+[[redirects]]
+from = "/api/events"
+to = "/.netlify/functions/websocket"
+status = 200
+
+# Broadcast endpoint
+[[redirects]]
+from = "/api/broadcast"
+to = "/.netlify/functions/websocket"
+status = 200

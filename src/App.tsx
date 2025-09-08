@@ -7,6 +7,7 @@ import { Button } from './components/ui/button';
 import { Download, Upload, Database } from 'lucide-react';
 import { useIsMobile } from './components/ui/use-mobile';
 import { apiService } from './services/api';
+import { realtimeService } from './services/realtime';
 
 interface TimeEntry {
   id: string;
@@ -34,6 +35,19 @@ export default function App() {
   const [realSalaries, setRealSalaries] = useState<{ [key: string]: number }>({});
   const [dbInitialized, setDbInitialized] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [realtimeStatus, setRealtimeStatus] = useState({ isConnected: false, usePolling: false });
+
+  // Load time entries from database
+  const loadTimeEntries = async () => {
+    if (!dbInitialized) return;
+    
+    try {
+      const dbEntries = await apiService.getTimeEntries();
+      setEntries(dbEntries);
+    } catch (error) {
+      console.error('Error loading time entries from database:', error);
+    }
+  };
 
   // Initialize database and load data on mount
   useEffect(() => {
@@ -74,7 +88,37 @@ export default function App() {
         }
       }
 
+      // Connect to real-time service
+      realtimeService.connect();
+
+      // Subscribe to real-time updates
+      const unsubscribeTimeEntries = realtimeService.subscribe('time_entries', (data) => {
+        console.log('Real-time time entries update:', data);
+        // Reload time entries from database
+        if (dbInitialized) {
+          loadTimeEntries();
+        }
+      });
+
+      const unsubscribeDocuments = realtimeService.subscribe('documents', (data) => {
+        console.log('Real-time documents update:', data);
+        // Documents will be reloaded by DriverCard component
+      });
+
+      const unsubscribeConnection = realtimeService.subscribe('connection', (data) => {
+        console.log('Real-time connection status:', data);
+        setRealtimeStatus(realtimeService.getConnectionStatus());
+      });
+
       setIsInitializing(false);
+
+      // Cleanup on unmount
+      return () => {
+        unsubscribeTimeEntries();
+        unsubscribeDocuments();
+        unsubscribeConnection();
+        realtimeService.disconnect();
+      };
     };
 
     initializeApp();
@@ -95,22 +139,44 @@ export default function App() {
     localStorage.setItem('realSalaries', JSON.stringify(realSalaries));
   }, [realSalaries]);
 
-  const addEntry = (entryData: Omit<TimeEntry, 'id' | 'earnings'>) => {
+  const addEntry = async (entryData: Omit<TimeEntry, 'id' | 'earnings'>) => {
     const newEntry: TimeEntry = {
       ...entryData,
       id: Date.now().toString(),
       earnings: entryData.hours * entryData.hourlyRate
     };
     
-    setEntries(prev => [newEntry, ...prev]);
+    if (dbInitialized) {
+      try {
+        await apiService.addTimeEntry(newEntry);
+        // Real-time update will handle the UI refresh
+      } catch (error) {
+        console.error('Error adding entry to database:', error);
+        // Fallback to localStorage
+        setEntries(prev => [newEntry, ...prev]);
+      }
+    } else {
+      setEntries(prev => [newEntry, ...prev]);
+    }
     
     // Update default hourly rate
     setDefaultHourlyRate(entryData.hourlyRate);
   };
 
-  const deleteEntry = (id: string) => {
+  const deleteEntry = async (id: string) => {
     if (confirm('Opravdu chcete smazat tento záznam?')) {
-      setEntries(prev => prev.filter(entry => entry.id !== id));
+      if (dbInitialized) {
+        try {
+          await apiService.deleteTimeEntry(id);
+          // Real-time update will handle the UI refresh
+        } catch (error) {
+          console.error('Error deleting entry from database:', error);
+          // Fallback to localStorage
+          setEntries(prev => prev.filter(entry => entry.id !== id));
+        }
+      } else {
+        setEntries(prev => prev.filter(entry => entry.id !== id));
+      }
     }
   };
 
@@ -119,12 +185,27 @@ export default function App() {
     setIsEditDialogOpen(true);
   };
 
-  const saveEditedEntry = (updatedEntry: TimeEntry) => {
-    setEntries(prev => 
-      prev.map(entry => 
-        entry.id === updatedEntry.id ? updatedEntry : entry
-      )
-    );
+  const saveEditedEntry = async (updatedEntry: TimeEntry) => {
+    if (dbInitialized) {
+      try {
+        await apiService.updateTimeEntry(updatedEntry.id, updatedEntry);
+        // Real-time update will handle the UI refresh
+      } catch (error) {
+        console.error('Error updating entry in database:', error);
+        // Fallback to localStorage
+        setEntries(prev => 
+          prev.map(entry => 
+            entry.id === updatedEntry.id ? updatedEntry : entry
+          )
+        );
+      }
+    } else {
+      setEntries(prev => 
+        prev.map(entry => 
+          entry.id === updatedEntry.id ? updatedEntry : entry
+        )
+      );
+    }
   };
 
   const closeEditDialog = () => {
@@ -242,9 +323,23 @@ export default function App() {
             Vyberte režim, který chcete použít
           </p>
           {dbInitialized && (
-            <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-              <Database className="h-4 w-4" />
-              Databáze připojena
+            <div className="mt-4 flex flex-col items-center gap-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                <Database className="h-4 w-4" />
+                Databáze připojena
+              </div>
+              {realtimeStatus.isConnected && (
+                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
+                  realtimeStatus.usePolling 
+                    ? 'bg-yellow-100 text-yellow-800' 
+                    : 'bg-blue-100 text-blue-800'
+                }`}>
+                  <div className={`h-2 w-2 rounded-full ${
+                    realtimeStatus.usePolling ? 'bg-yellow-600' : 'bg-blue-600'
+                  }`}></div>
+                  {realtimeStatus.usePolling ? 'Synchronizace (polling)' : 'Real-time synchronizace'}
+                </div>
+              )}
             </div>
           )}
         </div>

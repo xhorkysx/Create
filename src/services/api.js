@@ -1,5 +1,7 @@
 // API služba pro komunikaci s Netlify Functions
 
+import { realtimeService } from './realtime.js';
+
 const API_BASE = '/.netlify/functions';
 
 class ApiService {
@@ -58,7 +60,12 @@ class ApiService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      return await response.json();
+      const result = await response.json();
+      
+      // Broadcast change to other clients
+      realtimeService.broadcast('documents_updated', { id, issueDate, expiryDate });
+      
+      return result;
     } catch (error) {
       console.error('Error updating document:', error);
       throw error;
@@ -95,7 +102,12 @@ class ApiService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      return await response.json();
+      const result = await response.json();
+      
+      // Broadcast change to other clients
+      realtimeService.broadcast('time_entries_updated', { action: 'add', data: entryData });
+      
+      return result;
     } catch (error) {
       console.error('Error adding time entry:', error);
       throw error;
@@ -119,7 +131,12 @@ class ApiService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      return await response.json();
+      const result = await response.json();
+      
+      // Broadcast change to other clients
+      realtimeService.broadcast('time_entries_updated', { action: 'update', id, data: entryData });
+      
+      return result;
     } catch (error) {
       console.error('Error updating time entry:', error);
       throw error;
@@ -136,7 +153,12 @@ class ApiService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      return await response.json();
+      const result = await response.json();
+      
+      // Broadcast change to other clients
+      realtimeService.broadcast('time_entries_updated', { action: 'delete', id });
+      
+      return result;
     } catch (error) {
       console.error('Error deleting time entry:', error);
       throw error;
