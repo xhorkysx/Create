@@ -33,32 +33,51 @@ export default function App() {
   const [defaultHourlyRate, setDefaultHourlyRate] = useState(250);
   const [realSalaries, setRealSalaries] = useState<{ [key: string]: number }>({});
   const [dbInitialized, setDbInitialized] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
 
-  // Load data from localStorage on mount
+  // Initialize database and load data on mount
   useEffect(() => {
-    const savedEntries = localStorage.getItem('timeTrackingEntries');
-    const savedRate = localStorage.getItem('defaultHourlyRate');
-    const savedSalaries = localStorage.getItem('realSalaries');
-    
-    if (savedEntries) {
+    const initializeApp = async () => {
       try {
-        setEntries(JSON.parse(savedEntries));
+        // Try to initialize database first
+        await apiService.initDatabase();
+        setDbInitialized(true);
+        console.log('Database initialized successfully');
       } catch (error) {
-        console.error('Error loading entries:', error);
+        console.error('Database initialization failed:', error);
+        // Continue with localStorage fallback
+        setDbInitialized(false);
       }
-    }
-    
-    if (savedRate) {
-      setDefaultHourlyRate(parseInt(savedRate));
-    }
-    
-    if (savedSalaries) {
-      try {
-        setRealSalaries(JSON.parse(savedSalaries));
-      } catch (error) {
-        console.error('Error loading salaries:', error);
+
+      // Load data from localStorage as fallback
+      const savedEntries = localStorage.getItem('timeTrackingEntries');
+      const savedRate = localStorage.getItem('defaultHourlyRate');
+      const savedSalaries = localStorage.getItem('realSalaries');
+      
+      if (savedEntries) {
+        try {
+          setEntries(JSON.parse(savedEntries));
+        } catch (error) {
+          console.error('Error loading entries:', error);
+        }
       }
-    }
+      
+      if (savedRate) {
+        setDefaultHourlyRate(parseInt(savedRate));
+      }
+      
+      if (savedSalaries) {
+        try {
+          setRealSalaries(JSON.parse(savedSalaries));
+        } catch (error) {
+          console.error('Error loading salaries:', error);
+        }
+      }
+
+      setIsInitializing(false);
+    };
+
+    initializeApp();
   }, []);
 
   // Save data to localStorage whenever entries change
@@ -137,12 +156,15 @@ export default function App() {
 
   const initializeDatabase = async () => {
     try {
+      setIsInitializing(true);
       await apiService.initDatabase();
       setDbInitialized(true);
       alert('Databáze byla úspěšně inicializována!');
     } catch (error) {
       console.error('Error initializing database:', error);
       alert('Chyba při inicializaci databáze. Zkontrolujte konzoli prohlížeče.');
+    } finally {
+      setIsInitializing(false);
     }
   };
 
@@ -193,6 +215,23 @@ export default function App() {
     event.target.value = '';
   };
 
+  // Loading screen
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <div>
+            <h1 className="text-2xl font-bold mb-2">Inicializace aplikace</h1>
+            <p className="text-muted-foreground">
+              Připravujeme databázi a načítáme data...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Entry screen component
   const EntryScreen = () => (
     <div className="min-h-screen bg-background flex items-center justify-center">
@@ -202,6 +241,12 @@ export default function App() {
           <p className="text-muted-foreground text-lg">
             Vyberte režim, který chcete použít
           </p>
+          {dbInitialized && (
+            <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+              <Database className="h-4 w-4" />
+              Databáze připojena
+            </div>
+          )}
         </div>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
@@ -224,15 +269,16 @@ export default function App() {
         {!dbInitialized && (
           <div className="mt-8 text-center">
             <p className="text-muted-foreground mb-4">
-              Pro použití databáze je potřeba ji nejdříve inicializovat
+              Databáze není dostupná. Používá se localStorage.
             </p>
             <Button 
               onClick={initializeDatabase}
               variant="outline"
               className="flex items-center gap-2"
+              disabled={isInitializing}
             >
               <Database className="h-4 w-4" />
-              Inicializovat databázi
+              {isInitializing ? 'Inicializace...' : 'Zkusit připojit databázi'}
             </Button>
           </div>
         )}
