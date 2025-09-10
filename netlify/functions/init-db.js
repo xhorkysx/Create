@@ -54,19 +54,24 @@ export const handler = async (event, context) => {
     // Vložení výchozích dokumentů
     const defaultDocuments = [
       // Doklady
-      { type: 'documents', name: 'Občanský průkaz' },
-      { type: 'documents', name: 'Řidičský průkaz' },
       { type: 'documents', name: 'ADR průkaz' },
+      { type: 'documents', name: 'Řidičský průkaz' },
+      { type: 'documents', name: 'Občanský průkaz' },
+      { type: 'documents', name: 'Karta do tachografu' },
       // Interní
-      { type: 'internal', name: 'Kybernetická bezpečnost' },
-      { type: 'internal', name: 'Zdravotní prohlídka' },
       { type: 'internal', name: 'Compliance' },
       { type: 'internal', name: 'Hesla do PC' },
+      { type: 'internal', name: 'Kybernetická bezpečnost' },
+      { type: 'internal', name: 'Zdravotní prohlídka' },
       // Střediska
       { type: 'centers', name: 'Střelice' },
-      { type: 'centers', name: 'Šlapánov' },
       { type: 'centers', name: 'Loukov' },
-      { type: 'centers', name: 'Sedlnice' }
+      { type: 'centers', name: 'Šlapánov' },
+      { type: 'centers', name: 'Klobouky' },
+      { type: 'centers', name: 'Cerekvice' },
+      { type: 'centers', name: 'Sedlnice' },
+      { type: 'centers', name: 'Smyslov' },
+      { type: 'centers', name: 'Mstětice' }
     ];
 
     const today = new Date().toISOString().split('T')[0];

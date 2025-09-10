@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
 import { realtimeService } from '../services/realtime';
+import { DriverCardNavigation } from './DriverCardNavigation';
 
 interface DocumentItem {
   id: string;
@@ -22,6 +23,7 @@ export function DriverCard() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<'documents' | 'internal' | 'centers' | null>(null);
 
   // Načtení dat z API
   useEffect(() => {
@@ -257,10 +259,27 @@ export function DriverCard() {
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-6">Karta řidiče</h2>
       
-      {/* All tables on one page */}
-      {renderTable('documents', 'Doklady')}
-      {renderTable('internal', 'Interní dokumenty')}
-      {renderTable('centers', 'Střediska')}
+      {!activeSection ? (
+        <DriverCardNavigation 
+          onSectionSelect={setActiveSection}
+          activeSection={activeSection}
+        />
+      ) : (
+        <div>
+          <div className="mb-6">
+            <button 
+              onClick={() => setActiveSection(null)}
+              className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
+            >
+              ← Zpět na výběr sekce
+            </button>
+          </div>
+          
+          {activeSection === 'documents' && renderTable('documents', 'Doklady')}
+          {activeSection === 'internal' && renderTable('internal', 'Interní dokumenty')}
+          {activeSection === 'centers' && renderTable('centers', 'Střediska - vstupy')}
+        </div>
+      )}
     </div>
   );
 }
