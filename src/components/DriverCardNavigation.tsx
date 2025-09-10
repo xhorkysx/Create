@@ -13,25 +13,31 @@ export function DriverCardNavigation({ onSectionSelect, activeSection }: DriverC
       id: 'documents' as const,
       title: 'Doklady',
       icon: FileText,
-      color: 'bg-blue-500 hover:bg-blue-600'
+      color: 'bg-blue-500 hover:bg-blue-600',
+      subtitle: 'ADR průkaz (45 dnů)'
     },
     {
       id: 'internal' as const,
       title: 'Interní dokumenty',
       icon: Shield,
-      color: 'bg-green-500 hover:bg-green-600'
+      color: 'bg-green-500 hover:bg-green-600',
+      subtitle: [
+        'Kybernetická bezpečnost (5 dnů)',
+        'Hesla do PC (10 dnů)', 
+        'Compliance (15 dnů)'
+      ]
     },
     {
       id: 'centers' as const,
       title: 'Střediska - vstupy',
       icon: Building2,
-      color: 'bg-purple-500 hover:bg-purple-600'
+      color: 'bg-purple-500 hover:bg-purple-600',
+      subtitle: 'Střelice - vyprší za 8 dnů'
     }
   ];
 
   return (
     <div className="mb-8">
-      <h3 className="text-xl font-bold mb-4 text-gray-800">Vyberte sekci</h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {navigationItems.map((item) => {
           const IconComponent = item.icon;
@@ -52,6 +58,17 @@ export function DriverCardNavigation({ onSectionSelect, activeSection }: DriverC
                 isActive ? 'text-primary-foreground' : 'text-primary'
               }`} />
               <h4 className="font-semibold text-lg">{item.title}</h4>
+              {item.subtitle && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  {Array.isArray(item.subtitle) ? (
+                    item.subtitle.map((line, index) => (
+                      <div key={index}>{line}</div>
+                    ))
+                  ) : (
+                    <div>{item.subtitle}</div>
+                  )}
+                </div>
+              )}
             </Button>
           );
         })}
