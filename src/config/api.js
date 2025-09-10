@@ -2,7 +2,7 @@
 
 // Nastavte na true pro použití mock API (lokální vývoj)
 // Nastavte na false pro použití skutečného API (produkce)
-export const USE_MOCK_API = true;
+export const USE_MOCK_API = false;
 
 // Automatické rozpoznání prostředí
 export const isDevelopment = import.meta.env.DEV;
