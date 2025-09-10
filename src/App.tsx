@@ -3,6 +3,7 @@ import { TimeEntryForm } from './components/TimeEntryForm';
 import { TimeTrackingTabs } from './components/TimeTrackingTabs';
 import { EditEntryDialog } from './components/EditEntryDialog';
 import { DriverCard } from './components/DriverCard';
+import { CEPROLogo } from './components/CEPROLogo';
 import { Button } from './components/ui/button';
 import { Download, Upload, Database } from 'lucide-react';
 import { useIsMobile } from './components/ui/use-mobile';
@@ -327,6 +328,9 @@ export default function App() {
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="text-center space-y-8">
         <div>
+          <div className="mb-8">
+            <CEPROLogo />
+          </div>
           <h1 className="text-4xl font-bold mb-4">Vítejte v aplikaci</h1>
           <p className="text-muted-foreground text-lg">
             Vyberte režim, který chcete použít
