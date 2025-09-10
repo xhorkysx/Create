@@ -1,12 +1,17 @@
 // API služba pro komunikaci s Netlify Functions
 
 import { realtimeService } from './realtime.js';
+import { mockApiService } from './mockApi.js';
+import { shouldUseMockApi } from '../config/api.js';
 
 const API_BASE = '/.netlify/functions';
 
 class ApiService {
   // Inicializace databáze
   async initDatabase() {
+    if (shouldUseMockApi) {
+      return await mockApiService.initDatabase();
+    }
     try {
       const response = await fetch(`${API_BASE}/init-db`, {
         method: 'POST',
@@ -28,6 +33,9 @@ class ApiService {
 
   // DOKUMENTY API
   async getDocuments() {
+    if (shouldUseMockApi) {
+      return await mockApiService.getDocuments();
+    }
     try {
       const response = await fetch(`${API_BASE}/documents`);
       
@@ -43,6 +51,9 @@ class ApiService {
   }
 
   async updateDocument(id, issueDate, expiryDate) {
+    if (shouldUseMockApi) {
+      return await mockApiService.updateDocument(id, issueDate, expiryDate);
+    }
     try {
       const response = await fetch(`${API_BASE}/documents`, {
         method: 'PUT',
@@ -74,6 +85,9 @@ class ApiService {
 
   // ČASOVÉ ZÁZNAMY API
   async getTimeEntries() {
+    if (shouldUseMockApi) {
+      return await mockApiService.getTimeEntries();
+    }
     try {
       const response = await fetch(`${API_BASE}/time-entries`);
       
@@ -89,6 +103,9 @@ class ApiService {
   }
 
   async addTimeEntry(entryData) {
+    if (shouldUseMockApi) {
+      return await mockApiService.addTimeEntry(entryData);
+    }
     try {
       const response = await fetch(`${API_BASE}/time-entries`, {
         method: 'POST',
@@ -115,6 +132,9 @@ class ApiService {
   }
 
   async updateTimeEntry(id, entryData) {
+    if (shouldUseMockApi) {
+      return await mockApiService.updateTimeEntry(id, entryData);
+    }
     try {
       const response = await fetch(`${API_BASE}/time-entries`, {
         method: 'PUT',
@@ -144,6 +164,9 @@ class ApiService {
   }
 
   async deleteTimeEntry(id) {
+    if (shouldUseMockApi) {
+      return await mockApiService.deleteTimeEntry(id);
+    }
     try {
       const response = await fetch(`${API_BASE}/time-entries?id=${id}`, {
         method: 'DELETE',

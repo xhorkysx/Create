@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
+import { Plus, X } from "lucide-react";
 
 interface TimeEntry {
   id: string;
@@ -31,6 +32,7 @@ export function TimeEntryForm({
   onAddEntry,
   defaultHourlyRate,
 }: TimeEntryFormProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [date, setDate] = useState(
     new Date().toISOString().split("T")[0],
   );
@@ -66,75 +68,110 @@ export function TimeEntryForm({
     // Reset form
     setHours("");
     setIsHoliday(false);
+    setIsExpanded(false);
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Přidat nový záznam</CardTitle>
+        <div className="flex items-center justify-center">
+          {!isExpanded ? (
+            <Button 
+              onClick={() => setIsExpanded(true)}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Přidat záznam
+            </Button>
+          ) : (
+            <div className="flex items-center justify-between w-full">
+              <CardTitle>Přidat nový záznam</CardTitle>
+              <Button 
+                onClick={() => setIsExpanded(false)}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <X className="h-4 w-4" />
+                Zrušit
+              </Button>
+            </div>
+          )}
+        </div>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="date">Datum</Label>
-              <Input
-                id="date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-              />
+      
+      {isExpanded && (
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="date">Datum</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="hours">Počet hodin</Label>
+                <Input
+                  id="hours"
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  placeholder="8"
+                  value={hours}
+                  onChange={(e) => setHours(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="hourlyRate">
+                  Hodinová sazba (Kč)
+                </Label>
+                <Input
+                  id="hourlyRate"
+                  type="number"
+                  step="1"
+                  min="0"
+                  placeholder="250"
+                  value={isHoliday ? "450" : hourlyRate}
+                  onChange={(e) => setHourlyRate(e.target.value)}
+                  disabled={isHoliday}
+                  required
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="hours">Počet hodin</Label>
-              <Input
-                id="hours"
-                type="number"
-                step="0.5"
-                min="0"
-                placeholder="8"
-                value={hours}
-                onChange={(e) => setHours(e.target.value)}
-                required
+            <div className="flex items-center gap-4">
+              <Checkbox
+                id="isHoliday"
+                checked={isHoliday}
+                onCheckedChange={(checked) => setIsHoliday(checked as boolean)}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="hourlyRate">
-                Hodinová sazba (Kč)
+              <Label htmlFor="isHoliday" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Práce ve svátek (450 Kč/h)
               </Label>
-              <Input
-                id="hourlyRate"
-                type="number"
-                step="1"
-                min="0"
-                placeholder="250"
-                value={isHoliday ? "450" : hourlyRate}
-                onChange={(e) => setHourlyRate(e.target.value)}
-                disabled={isHoliday}
-                required
-              />
             </div>
-          </div>
 
-          <div className="flex items-center gap-4">
-            <Checkbox
-              id="isHoliday"
-              checked={isHoliday}
-              onCheckedChange={(checked) => setIsHoliday(checked as boolean)}
-            />
-            <Label htmlFor="isHoliday" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Práce ve svátek (450 Kč/h)
-            </Label>
-          </div>
-
-          <Button type="submit" className="w-full">
-            Přidat záznam
-          </Button>
-        </form>
-      </CardContent>
+            <div className="flex gap-2">
+              <Button type="submit" className="flex-1">
+                Uložit záznam
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline"
+                onClick={() => setIsExpanded(false)}
+              >
+                Zrušit
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      )}
     </Card>
   );
 }

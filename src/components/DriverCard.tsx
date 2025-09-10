@@ -179,13 +179,20 @@ export function DriverCard() {
                   <div className="flex gap-2 mt-3">
                     <button 
                       onClick={saveEdit}
-                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm"
+                      className="flex-1 px-4 py-2 rounded text-base font-bold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm border border-green-600"
+                      style={{ 
+                        backgroundColor: '#16a34a', 
+                        color: '#ffffff', 
+                        fontSize: '16px', 
+                        fontWeight: 'bold',
+                        border: '2px solid #16a34a'
+                      }}
                     >
                       ✓ Uložit
                     </button>
                     <button 
                       onClick={cancelEdit}
-                      className="flex-1 px-4 py-2 border-2 border-gray-300 rounded text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                      className="flex-1 px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
                     >
                       ✗ Zrušit
                     </button>

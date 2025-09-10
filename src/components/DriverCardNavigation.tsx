@@ -12,21 +12,18 @@ export function DriverCardNavigation({ onSectionSelect, activeSection }: DriverC
     {
       id: 'documents' as const,
       title: 'Doklady',
-      description: 'ADR průkaz, Řidičský průkaz, Občanský průkaz, Karta do tachografu',
       icon: FileText,
       color: 'bg-blue-500 hover:bg-blue-600'
     },
     {
       id: 'internal' as const,
       title: 'Interní dokumenty',
-      description: 'Compliance, Hesla do PC, Kybernetická bezpečnost, Zdravotní prohlídka',
       icon: Shield,
       color: 'bg-green-500 hover:bg-green-600'
     },
     {
       id: 'centers' as const,
       title: 'Střediska - vstupy',
-      description: 'Střelice, Loukov, Šlapánov, Klobouky, Cerekvice, Sedlnice, Smyslov, Mstětice',
       icon: Building2,
       color: 'bg-purple-500 hover:bg-purple-600'
     }
@@ -54,8 +51,7 @@ export function DriverCardNavigation({ onSectionSelect, activeSection }: DriverC
               <IconComponent className={`h-12 w-12 mb-3 ${
                 isActive ? 'text-primary-foreground' : 'text-primary'
               }`} />
-              <h4 className="font-semibold text-lg mb-2">{item.title}</h4>
-              <p className="text-sm opacity-80 leading-relaxed">{item.description}</p>
+              <h4 className="font-semibold text-lg">{item.title}</h4>
             </Button>
           );
         })}

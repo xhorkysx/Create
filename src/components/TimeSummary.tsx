@@ -31,9 +31,8 @@ export function TimeSummary({ entries, period, realSalary, onSetRealSalary, onAd
   const [hoursInput, setHoursInput] = useState('');
 
   const totalHours = entries.reduce((sum, entry) => sum + entry.hours, 0);
-  // For months: show real salary if set, otherwise show calculated earnings
-  // For years: use real salary if available, otherwise calculate from entries
-  const totalEarnings = realSalary !== undefined ? realSalary : entries.reduce((sum, entry) => sum + entry.earnings, 0);
+  // Always show calculated earnings for the current period (month)
+  const totalEarnings = entries.reduce((sum, entry) => sum + entry.earnings, 0);
   const averageHourlyRate = totalHours > 0 ? totalEarnings / totalHours : 0;
 
   const formatCurrency = (amount: number) => {
@@ -80,10 +79,10 @@ export function TimeSummary({ entries, period, realSalary, onSetRealSalary, onAd
       description: '230-280 Kč/h'
     },
     {
-      title: `Celkový výdělek${period ? ` - ${period}` : ''}`,
-      value: realSalary !== undefined ? formatCurrency(realSalary) : (onSetRealSalary ? '—' : formatCurrency(totalEarnings)),
+      title: 'Celkový výdělek - aktuální měsíc',
+      value: formatCurrency(totalEarnings),
       icon: DollarSign,
-      description: period || 'Za všechny záznamy',
+      description: period || new Date().toLocaleDateString('cs-CZ', { month: 'long', year: 'numeric' }),
       realSalary: realSalary,
       showSalaryInput: showSalaryInput,
       onToggleSalaryInput: () => setShowSalaryInput(!showSalaryInput),
