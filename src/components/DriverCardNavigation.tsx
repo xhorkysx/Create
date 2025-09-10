@@ -39,14 +39,12 @@ export function DriverCardNavigation({ onSectionSelect, activeSection }: DriverC
   const getExpiringCenters = () => {
     if (!documentsData || !documentsData.centers) return null;
     
-    const expiring = documentsData.centers
-      .filter((center: any) => center.daysRemaining <= 14 && center.daysRemaining >= 0)
-      .sort((a: any, b: any) => a.daysRemaining - b.daysRemaining);
+    // Najdi vždy středisko "Střelice" bez ohledu na dobu do expirace
+    const střelice = documentsData.centers.find((center: any) => center.name === 'Střelice');
     
-    if (expiring.length === 0) return null;
+    if (!střelice) return null;
     
-    const nearest = expiring[0];
-    return `${nearest.name} - vyprší za ${nearest.daysRemaining} dnů`;
+    return `${střelice.name} - vyprší za ${střelice.daysRemaining} dnů`;
   };
 
   const navigationItems = [
