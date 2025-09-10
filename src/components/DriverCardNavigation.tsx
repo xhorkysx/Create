@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileText, Shield, Building2 } from 'lucide-react';
 import { Button } from './ui/button';
+import { apiService } from '../services/api';
 
 interface DriverCardNavigationProps {
   onSectionSelect: (section: 'documents' | 'internal' | 'centers') => void;
@@ -8,31 +9,67 @@ interface DriverCardNavigationProps {
 }
 
 export function DriverCardNavigation({ onSectionSelect, activeSection }: DriverCardNavigationProps) {
+  const [documentsData, setDocumentsData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadDocumentsData();
+  }, []);
+
+  const loadDocumentsData = async () => {
+    try {
+      const data = await apiService.getDocuments();
+      setDocumentsData(data);
+    } catch (error) {
+      console.error('Error loading documents:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getExpiringDocuments = (type: string, maxDays: number = 45) => {
+    if (!documentsData || !documentsData[type]) return [];
+    
+    return documentsData[type]
+      .filter((doc: any) => doc.daysRemaining <= maxDays && doc.daysRemaining >= 0)
+      .sort((a: any, b: any) => a.daysRemaining - b.daysRemaining)
+      .map((doc: any) => `${doc.name} (${doc.daysRemaining} dnů)`);
+  };
+
+  const getExpiringCenters = () => {
+    if (!documentsData || !documentsData.centers) return null;
+    
+    const expiring = documentsData.centers
+      .filter((center: any) => center.daysRemaining <= 14 && center.daysRemaining >= 0)
+      .sort((a: any, b: any) => a.daysRemaining - b.daysRemaining);
+    
+    if (expiring.length === 0) return null;
+    
+    const nearest = expiring[0];
+    return `${nearest.name} - vyprší za ${nearest.daysRemaining} dnů`;
+  };
+
   const navigationItems = [
     {
       id: 'documents' as const,
       title: 'Doklady',
       icon: FileText,
       color: 'bg-blue-500 hover:bg-blue-600',
-      subtitle: 'ADR průkaz (45 dnů)'
+      subtitle: loading ? 'Načítání...' : getExpiringDocuments('documents', 45)[0] || null
     },
     {
       id: 'internal' as const,
       title: 'Interní dokumenty',
       icon: Shield,
       color: 'bg-green-500 hover:bg-green-600',
-      subtitle: [
-        'Kybernetická bezpečnost (5 dnů)',
-        'Hesla do PC (10 dnů)', 
-        'Compliance (15 dnů)'
-      ]
+      subtitle: loading ? ['Načítání...'] : getExpiringDocuments('internal', 45)
     },
     {
       id: 'centers' as const,
       title: 'Střediska - vstupy',
       icon: Building2,
       color: 'bg-purple-500 hover:bg-purple-600',
-      subtitle: 'Střelice - vyprší za 8 dnů'
+      subtitle: loading ? 'Načítání...' : getExpiringCenters()
     }
   ];
 
