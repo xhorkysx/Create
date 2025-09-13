@@ -125,9 +125,12 @@ export function DispatcherInfo() {
           
           // Zkontrolujeme, jestli se datum shoduje
           if (isDateMatch(dateCell, today)) {
+            const cechyName = cechy ? String(cechy).trim() : 'Není určeno';
+            const moravaName = morava ? String(morava).trim() : cechyName; // Pokud je Morava prázdná, použij jméno z Čech
+            
             foundData = {
-              cechy: cechy ? String(cechy).trim() : 'Není určeno',
-              morava: morava ? String(morava).trim() : 'Není určeno',
+              cechy: cechyName,
+              morava: moravaName,
               date: todayString
             };
             console.log('✅ Nalezena data pro dnešní datum na řádku', i, ':', foundData);
@@ -144,9 +147,12 @@ export function DispatcherInfo() {
         for (let i = 0; i < jsonData.length; i++) {
           const row = jsonData[i];
           if (row && row.length > 2 && (row[1] || row[2])) {
+            const cechyName = row[1] ? String(row[1]).trim() : 'Není určeno';
+            const moravaName = row[2] ? String(row[2]).trim() : cechyName; // Pokud je Morava prázdná, použij jméno z Čech
+            
             const fallbackData = {
-              cechy: row[1] ? String(row[1]).trim() : 'Není určeno',
-              morava: row[2] ? String(row[2]).trim() : 'Není určeno',
+              cechy: cechyName,
+              morava: moravaName,
               date: todayString
             };
             console.log('📋 Používám fallback data z řádku', i, ':', fallbackData);
