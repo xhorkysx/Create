@@ -42,6 +42,10 @@ export function TimeSummary({ entries, period, realSalary, onSetRealSalary, onAd
     }).format(amount);
   };
 
+  const formatHours = (hours: number) => {
+    return hours.toFixed(1).replace('.', ',');
+  };
+
   const handleSetSalary = () => {
     const amount = parseFloat(salaryInput);
     if (amount > 0 && onSetRealSalary) {
@@ -52,8 +56,10 @@ export function TimeSummary({ entries, period, realSalary, onSetRealSalary, onAd
   };
 
   const handleAddVacationHours = () => {
-    const hours = parseFloat(hoursInput);
-    if (hours > 0 && onAddVacationHours) {
+    // Převést čárku na tečku pro správné zpracování desetinných čísel
+    const normalizedHours = hoursInput.replace(',', '.');
+    const hours = parseFloat(normalizedHours);
+    if (hours > 0 && onAddVacationHours && !isNaN(hours)) {
       onAddVacationHours(hours);
       setHoursInput('');
       setShowHoursInput(false);
@@ -63,7 +69,7 @@ export function TimeSummary({ entries, period, realSalary, onSetRealSalary, onAd
   const stats = [
     {
       title: `Celkové hodiny${period ? ` - ${period}` : ''}`,
-      value: `${totalHours.toFixed(1)}h`,
+      value: `${formatHours(totalHours)}h`,
       icon: Clock,
       description: `${entries.length} záznamů`,
       showHoursInput: showHoursInput,
@@ -92,7 +98,7 @@ export function TimeSummary({ entries, period, realSalary, onSetRealSalary, onAd
     },
     {
       title: 'Průměr za den',
-      value: entries.length > 0 ? `${(totalHours / entries.length).toFixed(1)}h` : '0h',
+      value: entries.length > 0 ? `${formatHours(totalHours / entries.length)}h` : '0h',
       icon: Calendar,
       description: entries.length > 0 ? formatCurrency(totalEarnings / entries.length) : formatCurrency(0)
     }
@@ -189,8 +195,8 @@ export function TimeSummary({ entries, period, realSalary, onSetRealSalary, onAd
                     <div className="space-y-2">
                       <div className="flex gap-2">
                         <Input
-                          type="number"
-                          placeholder="Počet hodin"
+                          type="text"
+                          placeholder="Počet hodin (např. 13,8)"
                           value={stat.hoursInput}
                           onChange={(e) => stat.onHoursInputChange(e.target.value)}
                           className="flex-1"

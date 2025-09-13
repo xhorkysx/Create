@@ -33,6 +33,10 @@ export function TimeEntryList({ entries, onDeleteEntry, onEditEntry, title }: Ti
     }).format(amount);
   };
 
+  const formatHours = (hours: number) => {
+    return hours.toString().replace('.', ',');
+  };
+
   const getWeekday = (dateString: string) => {
     const date = new Date(dateString);
     const weekdays = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
@@ -84,7 +88,7 @@ export function TimeEntryList({ entries, onDeleteEntry, onEditEntry, title }: Ti
                 <TableRow key={entry.id}>
                   <TableCell>{formatDate(entry.date)}</TableCell>
                   <TableCell className="font-medium">{getWeekday(entry.date)}</TableCell>
-                  <TableCell>{entry.hours}h</TableCell>
+                  <TableCell>{formatHours(entry.hours)}h</TableCell>
                   <TableCell>
                     {entry.isVacation ? 'Dovolená' : formatCurrency(entry.hourlyRate) + '/h'}
                   </TableCell>

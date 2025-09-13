@@ -36,11 +36,13 @@ export function EditEntryDialog({ entry, open, onClose, onSave }: EditEntryDialo
   const handleSave = () => {
     if (!entry) return;
 
-    const hoursNum = parseFloat(hours);
+    // Převést čárku na tečku pro správné zpracování desetinných čísel
+    const normalizedHours = hours.replace(',', '.');
+    const hoursNum = parseFloat(normalizedHours);
     const rateNum = parseFloat(hourlyRate);
     
-    if (!hoursNum || !rateNum || hoursNum <= 0 || rateNum <= 0) {
-      alert('Prosím zadejte platné hodnoty pro hodiny a sazbu');
+    if (!hoursNum || !rateNum || hoursNum <= 0 || rateNum <= 0 || isNaN(hoursNum)) {
+      alert('Prosím zadejte platné hodnoty pro hodiny a sazbu (např. 13,8 nebo 8)');
       return;
     }
 
@@ -79,9 +81,9 @@ export function EditEntryDialog({ entry, open, onClose, onSave }: EditEntryDialo
             <Label htmlFor="edit-hours">Počet hodin</Label>
             <Input
               id="edit-hours"
-              type="number"
-              step="0.5"
+              type="text"
               min="0"
+              placeholder="8 nebo 13,8"
               value={hours}
               onChange={(e) => setHours(e.target.value)}
             />

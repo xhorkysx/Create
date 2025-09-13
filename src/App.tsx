@@ -4,6 +4,7 @@ import { TimeTrackingTabs } from './components/TimeTrackingTabs';
 import { EditEntryDialog } from './components/EditEntryDialog';
 import { DriverCard } from './components/DriverCard';
 import { CEPROLogo } from './components/CEPROLogo';
+import { DispatcherInfo } from './components/DispatcherInfo';
 import { Button } from './components/ui/button';
 import { Download, Upload, Database } from 'lucide-react';
 import { useIsMobile } from './components/ui/use-mobile';
@@ -28,7 +29,7 @@ interface AppData {
 
 export default function App() {
   const isMobile = useIsMobile();
-  const [currentMode, setCurrentMode] = useState<'entry' | 'time-tracking' | null>(null);
+  const [currentMode, setCurrentMode] = useState<'entry' | 'time-tracking' | 'shifts' | 'transport-contacts' | null>(null);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -331,10 +332,12 @@ export default function App() {
           <div className="mb-8">
             <CEPROLogo />
           </div>
-          <h1 className="text-4xl font-bold mb-4">Vítejte v aplikaci</h1>
-          <p className="text-muted-foreground text-lg">
-            Vyberte režim, který chcete použít
-          </p>
+          
+          {/* Informace o dispečinku */}
+          <div className="mb-6">
+            <DispatcherInfo />
+          </div>
+          
           {dbInitialized && (
             <div className="mt-4 flex flex-col items-center gap-2">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
@@ -357,20 +360,34 @@ export default function App() {
           )}
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 justify-center px-4 max-w-2xl mx-auto">
           <Button 
             onClick={() => setCurrentMode('entry')}
             size="lg"
-            className="w-full sm:w-auto min-w-[200px] h-16 text-lg"
+            className="w-full h-16 text-lg"
           >
             Karta řidiče
           </Button>
           <Button 
             onClick={() => setCurrentMode('time-tracking')}
             size="lg"
-            className="w-full sm:w-auto min-w-[200px] h-16 text-lg"
+            className="w-full h-16 text-lg"
           >
             Odpracované hodiny
+          </Button>
+          <Button 
+            onClick={() => setCurrentMode('shifts')}
+            size="lg"
+            className="w-full h-16 text-lg"
+          >
+            Směny
+          </Button>
+          <Button 
+            onClick={() => setCurrentMode('transport-contacts')}
+            size="lg"
+            className="w-full h-16 text-lg"
+          >
+            Doprava - Kontakty
           </Button>
         </div>
         
@@ -492,6 +509,68 @@ export default function App() {
     </div>
   );
 
+  // Shifts mode component
+  const ShiftsMode = () => (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-2">
+            <Button 
+              onClick={() => setCurrentMode(null)}
+              variant="outline"
+              size="sm"
+            >
+              ← Zpět na výběr
+            </Button>
+            <h1>Směny</h1>
+          </div>
+          <p className="text-muted-foreground">
+            Správa směn a pracovních rozvrhů
+          </p>
+        </div>
+        
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">🕐</div>
+          <h2 className="text-2xl font-bold mb-2">Směny</h2>
+          <p className="text-muted-foreground">
+            Tato funkce bude brzy dostupná
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Transport contacts mode component
+  const TransportContactsMode = () => (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-2">
+            <Button 
+              onClick={() => setCurrentMode(null)}
+              variant="outline"
+              size="sm"
+            >
+              ← Zpět na výběr
+            </Button>
+            <h1>Doprava - Kontakty</h1>
+          </div>
+          <p className="text-muted-foreground">
+            Správa kontaktů pro dopravu a logistiku
+          </p>
+        </div>
+        
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">🚛</div>
+          <h2 className="text-2xl font-bold mb-2">Doprava - Kontakty</h2>
+          <p className="text-muted-foreground">
+            Tato funkce bude brzy dostupná
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
   // Main render logic
   if (currentMode === null) {
     return <EntryScreen />;
@@ -503,6 +582,14 @@ export default function App() {
 
   if (currentMode === 'time-tracking') {
     return <TimeTrackingMode />;
+  }
+
+  if (currentMode === 'shifts') {
+    return <ShiftsMode />;
+  }
+
+  if (currentMode === 'transport-contacts') {
+    return <TransportContactsMode />;
   }
 
   return <EntryScreen />;
