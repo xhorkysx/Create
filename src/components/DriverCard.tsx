@@ -143,92 +143,99 @@ export function DriverCard() {
   };
 
   const renderTable = (type: keyof typeof data, title: string) => {
-    const items = data[type];
+    const items = data[type].sort((a, b) => {
+      // Seřadíme podle data vypršení platnosti (nejdříve vypršící první)
+      const dateA = new Date(a.expiryDate);
+      const dateB = new Date(b.expiryDate);
+      return dateA.getTime() - dateB.getTime();
+    });
+
+    // Najdeme nejdelší název dokladu pro nastavení šířky prvního sloupce
+    const maxNameLength = Math.max(...items.map(item => item.name.length));
+    const nameColumnWidth = Math.max(maxNameLength * 8 + 20, 150); // 8px na znak + padding, minimum 150px
 
     return (
       <div className="mb-8">
         <h3 className="text-xl font-bold mb-4 text-blue-600">{title}</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {items.map(item => (
-            <div key={item.id} className="border rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="font-semibold text-sm">{item.name}</h4>
-                <span 
-                  className="px-2 py-1 rounded text-xs font-medium"
-                  style={getStatusStyle(item, type)}
-                >
-                  {getStatusText(item, type)}
-                </span>
-              </div>
-              
-              {(() => {
-                const isEditing = editingItem?.type === type && editingItem?.id === item.id;
-                console.log('Rendering item:', item.id, 'isEditing:', isEditing, 'editingItem:', editingItem);
-                return isEditing;
-              })() ? (
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Datum vypršení platnosti</label>
-                    <input
-                      type="date"
-                      value={editForm.expiryDate}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, expiryDate: e.target.value }))}
-                      className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div className="flex gap-2 mt-3">
-                    <button 
-                      onClick={saveEdit}
-                      className="flex-1 px-4 py-2 rounded text-base font-bold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm border border-green-600"
-                      style={{ 
-                        backgroundColor: '#16a34a', 
-                        color: '#ffffff', 
-                        fontSize: '16px', 
-                        fontWeight: 'bold',
-                        border: '2px solid #16a34a'
-                      }}
-                    >
-                      ✓ Uložit
-                    </button>
-                    <button 
-                      onClick={cancelEdit}
-                      className="flex-1 px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                    >
-                      ✗ Zrušit
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="space-y-2 text-xs">
+        <div className="border rounded-lg p-4">
+          <div className="space-y-4">
+            {items.map((item, index) => (
+              <div key={item.id} className={`py-3 ${index < items.length - 1 ? 'border-b border-gray-200' : ''}`}>
+                {(() => {
+                  const isEditing = editingItem?.type === type && editingItem?.id === item.id;
+                  console.log('Rendering item:', item.id, 'isEditing:', isEditing, 'editingItem:', editingItem);
+                  return isEditing;
+                })() ? (
+                  <div className="space-y-3">
                     <div>
-                      <span className="text-gray-500">Vyprší:</span>
-                      <p className="font-medium">{formatDate(item.expiryDate)}</p>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Datum vypršení platnosti</label>
+                      <input
+                        type="date"
+                        value={editForm.expiryDate}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, expiryDate: e.target.value }))}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
                     </div>
-                    <div>
-                      <span className="text-gray-500">Zbývá dnů:</span>
-                      <p 
-                        className="font-medium"
-                        style={{
-                          color: item.daysRemaining < 0 ? '#dc2626' : 
-                                 item.daysRemaining <= getWarningThreshold(item, type) ? '#ea580c' : 
-                                 '#16a34a'
+                    <div className="flex gap-2 mt-3">
+                      <button 
+                        onClick={saveEdit}
+                        className="flex-1 px-4 py-2 rounded text-base font-bold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm border border-green-600"
+                        style={{ 
+                          backgroundColor: '#16a34a', 
+                          color: '#ffffff', 
+                          fontSize: '16px', 
+                          fontWeight: 'bold',
+                          border: '2px solid #16a34a'
                         }}
                       >
-                        {item.daysRemaining}
-                      </p>
+                        ✓ Uložit
+                      </button>
+                      <button 
+                        onClick={cancelEdit}
+                        className="flex-1 px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                      >
+                        ✗ Zrušit
+                      </button>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => startEditing(type, item.id)}
-                    className="mt-3 w-full px-2 py-1 border border-gray-300 rounded text-xs hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  >
-                    Upravit
-                  </button>
-                </>
-              )}
-            </div>
-          ))}
+                ) : (
+                  <div className="flex items-center gap-6 text-xs">
+                    <div className="font-semibold text-sm flex-shrink-0" style={{ width: `${nameColumnWidth}px` }}>
+                      {item.name}
+                    </div>
+                    <div className="font-medium flex-shrink-0" style={{ minWidth: '100px' }}>
+                      {formatDate(item.expiryDate)}
+                    </div>
+                    <div 
+                      className="font-medium flex-shrink-0 text-center"
+                      style={{
+                        color: item.daysRemaining < 0 ? '#dc2626' : 
+                               item.daysRemaining <= getWarningThreshold(item, type) ? '#ea580c' : 
+                               '#16a34a',
+                        minWidth: '80px'
+                      }}
+                    >
+                      {item.daysRemaining}
+                    </div>
+                    <div className="flex-shrink-0">
+                      <span 
+                        className="px-2 py-1 rounded text-xs font-medium"
+                        style={getStatusStyle(item, type)}
+                      >
+                        {getStatusText(item, type)}
+                      </span>
+                    </div>
+                    <button 
+                      onClick={() => startEditing(type, item.id)}
+                      className="ml-auto px-3 py-1 border border-gray-300 rounded text-xs hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 flex-shrink-0"
+                    >
+                      Upravit
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
