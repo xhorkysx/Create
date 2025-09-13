@@ -199,8 +199,8 @@ export function DriverCard() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-6 text-xs">
-                    <div className="font-semibold text-sm flex-shrink-0" style={{ width: `${nameColumnWidth}px` }}>
+                  <div className="flex items-center gap-6 text-lg">
+                    <div className="font-semibold text-lg flex-shrink-0" style={{ width: `${nameColumnWidth}px` }}>
                       {item.name}
                     </div>
                     <div className="font-medium flex-shrink-0" style={{ minWidth: '100px' }}>

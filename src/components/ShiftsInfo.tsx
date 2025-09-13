@@ -314,7 +314,7 @@ export const ShiftsInfo: React.FC = () => {
                           key={nameIndex}
                           className="bg-white border border-gray-200 rounded-md p-1 text-center shadow-sm"
                         >
-                          <span className="text-xs font-medium text-gray-800 truncate block">{name}</span>
+                          <span className="text-lg font-medium text-gray-800 truncate block">{name}</span>
                         </div>
                       ))}
                     </div>
