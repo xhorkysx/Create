@@ -5,6 +5,7 @@ import { EditEntryDialog } from './components/EditEntryDialog';
 import { DriverCard } from './components/DriverCard';
 import { CEPROLogo } from './components/CEPROLogo';
 import { DispatcherInfo } from './components/DispatcherInfo';
+import { ShiftsInfo } from './components/ShiftsInfo';
 import { Button } from './components/ui/button';
 import { Download, Upload, Database } from 'lucide-react';
 import { useIsMobile } from './components/ui/use-mobile';
@@ -525,17 +526,11 @@ export default function App() {
             <h1>Směny</h1>
           </div>
           <p className="text-muted-foreground">
-            Správa směn a pracovních rozvrhů
+            Přehled směn podle aktuálního data
           </p>
         </div>
         
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">🕐</div>
-          <h2 className="text-2xl font-bold mb-2">Směny</h2>
-          <p className="text-muted-foreground">
-            Tato funkce bude brzy dostupná
-          </p>
-        </div>
+        <ShiftsInfo />
       </div>
     </div>
   );
