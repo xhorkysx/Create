@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { TimeEntryForm } from './components/TimeEntryForm';
 import { TimeTrackingTabs } from './components/TimeTrackingTabs';
 import { EditEntryDialog } from './components/EditEntryDialog';
@@ -8,7 +8,11 @@ import { DispatcherInfo } from './components/DispatcherInfo';
 import { LoginButton } from './components/LoginButton';
 import { ManagementMessages } from './components/ManagementMessages';
 import { ShiftsInfo } from './components/ShiftsInfo';
+import { ConsumptionDialog } from './components/ConsumptionDialog';
+import { ConsumptionCalendar } from './components/ConsumptionCalendar';
+import { ConsumptionChart } from './components/ConsumptionChart';
 import { Button } from './components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 import { Download, Upload, Database, ChevronLeft, Home, Menu } from 'lucide-react';
 import { useIsMobile } from './components/ui/use-mobile';
 import { apiService } from './services/api';
@@ -24,6 +28,16 @@ interface TimeEntry {
   isVacation?: boolean;
 }
 
+interface ConsumptionEntry {
+  id: string;
+  date: string;
+  fuelConsumption?: number; // v litrech - volitelné
+  kilometers: number;
+  averageConsumption: number; // l/100km
+  notes?: string;
+}
+
+
 interface AppData {
   entries: TimeEntry[];
   defaultHourlyRate: number;
@@ -32,7 +46,7 @@ interface AppData {
 
 export default function App() {
   const isMobile = useIsMobile();
-  const [currentMode, setCurrentMode] = useState<'entry' | 'time-tracking' | 'shifts' | 'transport-contacts' | 'consumption-record' | 'gas-station' | 'fault-reporting' | null>(null);
+  const [currentMode, setCurrentMode] = useState<'entry' | 'time-tracking' | 'shifts' | 'transport-contacts' | 'consumption-record' | 'gas-station' | 'fault-reporting' | 'fleet' | null>(null);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -45,6 +59,22 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<string>('');
   const [isInDriverCardSection, setIsInDriverCardSection] = useState(false);
   const [isNavigationOpen, setIsNavigationOpen] = useState(false);
+  
+  const toggleNavigation = useCallback(() => {
+    console.log('=== HAMBURGER CLICKED ===');
+    console.log('Toggle navigation, current state:', isNavigationOpen);
+    console.log('isMobile:', isMobile);
+    setIsNavigationOpen(prev => {
+      console.log('Previous state:', prev, 'New state:', !prev);
+      return !prev;
+    });
+  }, [isNavigationOpen, isMobile]);
+  
+  // Consumption record states
+  const [consumptionEntries, setConsumptionEntries] = useState<ConsumptionEntry[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [isConsumptionDialogOpen, setIsConsumptionDialogOpen] = useState(false);
+  const [editingConsumption, setEditingConsumption] = useState<ConsumptionEntry | null>(null);
 
   // Load time entries from database
   const loadTimeEntries = async () => {
@@ -158,6 +188,12 @@ export default function App() {
     localStorage.setItem('realSalaries', JSON.stringify(realSalaries));
   }, [realSalaries]);
 
+  // Load consumption data
+  useEffect(() => {
+    loadConsumptionEntries();
+  }, []);
+
+
   const addEntry = async (entryData: Omit<TimeEntry, 'id' | 'earnings'>) => {
     if (dbInitialized) {
       try {
@@ -244,6 +280,78 @@ export default function App() {
       ...prev,
       [monthKey]: amount
     }));
+  };
+
+  // Consumption record functions
+  const loadConsumptionEntries = async () => {
+    try {
+      // TODO: Implement API call to load consumption entries from database
+      // For now, start with empty array - user will add their own data
+      const initialEntries: ConsumptionEntry[] = [];
+      setConsumptionEntries(initialEntries);
+    } catch (error) {
+      console.error('Error loading consumption entries:', error);
+    }
+  };
+
+
+  const saveConsumptionEntry = async (entry: Omit<ConsumptionEntry, 'id'>) => {
+    try {
+      console.log('saveConsumptionEntry called with:', entry);
+      console.log('editingConsumption:', editingConsumption);
+      
+      if (editingConsumption) {
+        // Update existing entry
+        const updatedEntry: ConsumptionEntry = {
+          ...entry,
+          id: editingConsumption.id
+        };
+
+        console.log('Updating existing entry:', updatedEntry);
+        // TODO: Save to database
+        setConsumptionEntries(prev => {
+          const newEntries = prev.map(e => e.id === editingConsumption.id ? updatedEntry : e);
+          console.log('Updated consumptionEntries:', newEntries);
+          return newEntries;
+        });
+        
+      } else {
+        // Create new entry
+        const newEntry: ConsumptionEntry = {
+          ...entry,
+          id: Date.now().toString()
+        };
+
+        console.log('Creating new entry:', newEntry);
+        // TODO: Save to database
+        setConsumptionEntries(prev => {
+          const newEntries = [newEntry, ...prev];
+          console.log('New consumptionEntries:', newEntries);
+          return newEntries;
+        });
+        
+      }
+      
+      setIsConsumptionDialogOpen(false);
+      setEditingConsumption(null);
+    } catch (error) {
+      console.error('Error saving consumption entry:', error);
+    }
+  };
+
+  const deleteConsumptionEntry = async (id: string) => {
+    if (confirm('Opravdu chcete smazat tento záznam spotřeby?')) {
+      try {
+        const entry = consumptionEntries.find(e => e.id === id);
+        if (entry) {
+          // TODO: Delete from database
+          setConsumptionEntries(prev => prev.filter(e => e.id !== id));
+          
+        }
+      } catch (error) {
+        console.error('Error deleting consumption entry:', error);
+      }
+    }
   };
 
   // Login/Logout functions
@@ -464,6 +572,13 @@ export default function App() {
           >
             Hlášení závad
           </Button>
+          <Button 
+            onClick={() => setCurrentMode('fleet')}
+            size="lg"
+            className="w-full h-16 text-lg"
+          >
+            Flotila
+          </Button>
         </div>
         
         {!dbInitialized && (
@@ -496,16 +611,16 @@ export default function App() {
               <div className="flex items-center gap-4 mb-2">
                 {isMobile && (
                   <button
-                    onClick={() => setIsNavigationOpen(true)}
-                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
-                    title="Otevřít navigaci"
+                    onClick={toggleNavigation}
+                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
+                    title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
                   >
                     <Menu className="h-6 w-6 text-gray-600" />
                   </button>
                 )}
                 <button
                   onClick={() => setCurrentMode(null)}
-                  className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
                   title="Zpět na výběr"
                 >
                   <Home className="h-6 w-6 text-gray-600" />
@@ -576,16 +691,16 @@ export default function App() {
           <div className="flex items-center gap-4 mb-2">
             {isMobile && (
               <button
-                onClick={() => setIsNavigationOpen(true)}
-                className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
-                title="Otevřít navigaci"
+                onClick={toggleNavigation}
+                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
+                title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
               >
                 <Menu className="h-6 w-6 text-gray-600" />
               </button>
             )}
             <button
               onClick={() => setCurrentMode(null)}
-              className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
               title="Zpět na výběr"
             >
               <Home className="h-6 w-6 text-gray-600" />
@@ -593,7 +708,7 @@ export default function App() {
             {isInDriverCardSection && (
               <button
                 onClick={() => setIsInDriverCardSection(false)}
-                className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
                 title="Zpět na sekce"
               >
                 <ChevronLeft className="h-4 w-4 text-gray-600" />
@@ -621,16 +736,16 @@ export default function App() {
           <div className="flex items-center gap-4 mb-2">
             {isMobile && (
               <button
-                onClick={() => setIsNavigationOpen(true)}
-                className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
-                title="Otevřít navigaci"
+                onClick={toggleNavigation}
+                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
+                title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
               >
                 <Menu className="h-6 w-6 text-gray-600" />
               </button>
             )}
             <button
               onClick={() => setCurrentMode(null)}
-              className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
               title="Zpět na výběr"
             >
               <Home className="h-6 w-6 text-gray-600" />
@@ -655,16 +770,16 @@ export default function App() {
           <div className="flex items-center gap-4 mb-2">
             {isMobile && (
               <button
-                onClick={() => setIsNavigationOpen(true)}
-                className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
-                title="Otevřít navigaci"
+                onClick={toggleNavigation}
+                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
+                title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
               >
                 <Menu className="h-6 w-6 text-gray-600" />
               </button>
             )}
             <button
               onClick={() => setCurrentMode(null)}
-              className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
               title="Zpět na výběr"
             >
               <Home className="h-6 w-6 text-gray-600" />
@@ -688,44 +803,96 @@ export default function App() {
   );
 
   // Consumption record mode component
-  const ConsumptionRecordMode = () => (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-2">
-            {isMobile && (
+  const ConsumptionRecordMode = () => {
+    const [currentChartMonth, setCurrentChartMonth] = useState(new Date());
+    
+    const handleDateSelect = (date: Date) => {
+      setSelectedDate(date);
+    };
+
+    const handleAddConsumption = (dateString: string) => {
+      // Parse dateString as local date to avoid timezone issues
+      const [year, month, day] = dateString.split('-').map(Number);
+      setSelectedDate(new Date(year, month - 1, day));
+      setIsConsumptionDialogOpen(true);
+      setEditingConsumption(null);
+    };
+
+    const handleEditConsumption = (entry: ConsumptionEntry) => {
+      setEditingConsumption(entry);
+      setIsConsumptionDialogOpen(true);
+    };
+
+    const handleMonthChange = (month: Date) => {
+      setCurrentChartMonth(month);
+    };
+
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8 max-w-7xl">
+          <div className="mb-8">
+            <div className="flex items-center gap-4 mb-2">
+              {isMobile && (
+                <button
+                  onClick={toggleNavigation}
+                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
+                  title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
+                >
+                  <Menu className="h-6 w-6 text-gray-600" />
+                </button>
+              )}
               <button
-                onClick={() => setIsNavigationOpen(true)}
-                className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
-                title="Otevřít navigaci"
+                onClick={() => setCurrentMode(null)}
+                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
+                title="Zpět na výběr"
               >
-                <Menu className="h-6 w-6 text-gray-600" />
+                <Home className="h-6 w-6 text-gray-600" />
               </button>
-            )}
-            <button
-              onClick={() => setCurrentMode(null)}
-              className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
-              title="Zpět na výběr"
-            >
-              <Home className="h-6 w-6 text-gray-600" />
-            </button>
-            <h1>Záznam spotřeby</h1>
+              <h1>Záznam spotřeby</h1>
+            </div>
+            <p className="text-muted-foreground">
+              Sledování a zaznamenávání spotřeby paliva pro každou směnu
+            </p>
           </div>
-          <p className="text-muted-foreground">
-            Sledování a zaznamenávání spotřeby paliva a dalších nákladů
-          </p>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Chart */}
+            <div className="lg:col-span-1">
+              <ConsumptionChart entries={consumptionEntries} currentMonth={currentChartMonth} />
+            </div>
+            
+            {/* Calendar */}
+            <div className="lg:col-span-1">
+              <ConsumptionCalendar
+                consumptionEntries={consumptionEntries}
+                selectedDate={selectedDate}
+                onDateSelect={handleDateSelect}
+                onAddConsumption={handleAddConsumption}
+                onEditConsumption={handleEditConsumption}
+                onDeleteConsumption={deleteConsumptionEntry}
+                onMonthChange={handleMonthChange}
+              />
+            </div>
+          </div>
+
         </div>
-        
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">⛽</div>
-          <h2 className="text-2xl font-bold mb-2">Záznam spotřeby</h2>
-          <p className="text-muted-foreground">
-            Tato funkce bude brzy dostupná
-          </p>
-        </div>
+
+        {/* Consumption Dialog */}
+        <ConsumptionDialog
+          isOpen={isConsumptionDialogOpen}
+          onClose={() => {
+            setIsConsumptionDialogOpen(false);
+            setEditingConsumption(null);
+          }}
+          onSave={(entry: Omit<ConsumptionEntry, 'id'>) => saveConsumptionEntry(entry)}
+          selectedDate={selectedDate.getFullYear() + '-' + 
+            String(selectedDate.getMonth() + 1).padStart(2, '0') + '-' + 
+            String(selectedDate.getDate()).padStart(2, '0')}
+          editingEntry={editingConsumption}
+        />
       </div>
-    </div>
-  );
+    );
+  };
 
   // Gas station mode component
   const GasStationMode = () => (
@@ -735,16 +902,16 @@ export default function App() {
           <div className="flex items-center gap-4 mb-2">
             {isMobile && (
               <button
-                onClick={() => setIsNavigationOpen(true)}
-                className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
-                title="Otevřít navigaci"
+                onClick={toggleNavigation}
+                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
+                title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
               >
                 <Menu className="h-6 w-6 text-gray-600" />
               </button>
             )}
             <button
               onClick={() => setCurrentMode(null)}
-              className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
               title="Zpět na výběr"
             >
               <Home className="h-6 w-6 text-gray-600" />
@@ -775,16 +942,16 @@ export default function App() {
           <div className="flex items-center gap-4 mb-2">
             {isMobile && (
               <button
-                onClick={() => setIsNavigationOpen(true)}
-                className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
-                title="Otevřít navigaci"
+                onClick={toggleNavigation}
+                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
+                title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
               >
                 <Menu className="h-6 w-6 text-gray-600" />
               </button>
             )}
             <button
               onClick={() => setCurrentMode(null)}
-              className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
               title="Zpět na výběr"
             >
               <Home className="h-6 w-6 text-gray-600" />
@@ -835,20 +1002,51 @@ export default function App() {
     </div>
   );
 
+  // Fleet mode component
+  const FleetMode = () => (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-2">
+            {isMobile && (
+              <button
+                onClick={toggleNavigation}
+                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
+                title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
+              >
+                <Menu className="h-6 w-6 text-gray-600" />
+              </button>
+            )}
+            <button
+              onClick={() => setCurrentMode(null)}
+                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
+              title="Zpět na výběr"
+            >
+              <Home className="h-6 w-6 text-gray-600" />
+            </button>
+            <h1>Flotila</h1>
+          </div>
+          <p className="text-muted-foreground">
+            Správa vozidel a vozového parku
+          </p>
+        </div>
+        
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">🚛</div>
+          <h2 className="text-2xl font-bold mb-2">Flotila</h2>
+          <p className="text-muted-foreground">
+            Tato funkce bude brzy dostupná
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
   // Navigation panel component
   const NavigationPanel = () => (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setIsNavigationOpen(false)}>
-      <div className="fixed left-0 top-0 h-full w-80 bg-white shadow-lg" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-40 bg-black bg-opacity-50" onClick={() => setIsNavigationOpen(false)}>
+      <div className="absolute left-4 w-80 bg-white shadow-lg rounded-lg" style={{ marginTop: '60px' }} onClick={(e) => e.stopPropagation()}>
         <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold">Navigace</h2>
-            <button
-              onClick={() => setIsNavigationOpen(false)}
-              className="p-2 hover:bg-gray-100 rounded transition-colors"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-          </div>
           
           <div className="space-y-3">
             <Button 
@@ -923,6 +1121,16 @@ export default function App() {
             </Button>
             <Button 
               onClick={() => {
+                setCurrentMode('fleet');
+                setIsNavigationOpen(false);
+              }}
+              className="w-full justify-start h-12 text-lg"
+              variant={currentMode === 'fleet' ? 'default' : 'outline'}
+            >
+              Flotila
+            </Button>
+            <Button 
+              onClick={() => {
                 setCurrentMode(null);
                 setIsNavigationOpen(false);
               }}
@@ -939,7 +1147,12 @@ export default function App() {
 
   // Main render logic
   if (currentMode === null) {
-    return <EntryScreen />;
+    return (
+      <>
+        <EntryScreen />
+        {isNavigationOpen && <NavigationPanel />}
+      </>
+    );
   }
 
   if (currentMode === 'entry') {
@@ -1000,6 +1213,15 @@ export default function App() {
     return (
       <>
         <FaultReportingMode />
+        {isNavigationOpen && <NavigationPanel />}
+      </>
+    );
+  }
+
+  if (currentMode === 'fleet') {
+    return (
+      <>
+        <FleetMode />
         {isNavigationOpen && <NavigationPanel />}
       </>
     );
