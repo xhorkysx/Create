@@ -5,10 +5,11 @@ import { EditEntryDialog } from './components/EditEntryDialog';
 import { DriverCard } from './components/DriverCard';
 import { CEPROLogo } from './components/CEPROLogo';
 import { DispatcherInfo } from './components/DispatcherInfo';
+import { LoginButton } from './components/LoginButton';
 import { ManagementMessages } from './components/ManagementMessages';
 import { ShiftsInfo } from './components/ShiftsInfo';
 import { Button } from './components/ui/button';
-import { Download, Upload, Database } from 'lucide-react';
+import { Download, Upload, Database, ChevronLeft, Home, Menu } from 'lucide-react';
 import { useIsMobile } from './components/ui/use-mobile';
 import { apiService } from './services/api';
 import { realtimeService } from './services/realtime';
@@ -40,6 +41,10 @@ export default function App() {
   const [dbInitialized, setDbInitialized] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [realtimeStatus, setRealtimeStatus] = useState({ isConnected: false, usePolling: false });
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState<string>('');
+  const [isInDriverCardSection, setIsInDriverCardSection] = useState(false);
+  const [isNavigationOpen, setIsNavigationOpen] = useState(false);
 
   // Load time entries from database
   const loadTimeEntries = async () => {
@@ -81,6 +86,8 @@ export default function App() {
       // Load other data from localStorage
       const savedRate = localStorage.getItem('defaultHourlyRate');
       const savedSalaries = localStorage.getItem('realSalaries');
+      const savedLoginState = localStorage.getItem('isLoggedIn');
+      const savedUser = localStorage.getItem('currentUser');
       
       if (savedRate) {
         setDefaultHourlyRate(parseInt(savedRate));
@@ -92,6 +99,12 @@ export default function App() {
         } catch (error) {
           console.error('Error loading salaries:', error);
         }
+      }
+
+      // Load login state
+      if (savedLoginState === 'true' && savedUser) {
+        setIsLoggedIn(true);
+        setCurrentUser(savedUser);
       }
 
       // Connect to real-time service
@@ -233,6 +246,36 @@ export default function App() {
     }));
   };
 
+  // Login/Logout functions
+  const handleLogin = async (username: string, password: string) => {
+    // Prozatím jednoduchá autentifikace - v produkci by měla být bezpečnější
+    if (username === 'admin' && password === 'admin') {
+      setIsLoggedIn(true);
+      setCurrentUser(username);
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('currentUser', username);
+      return;
+    }
+    
+    // Zkusíme další testovací účty
+    if (username === 'user' && password === 'user') {
+      setIsLoggedIn(true);
+      setCurrentUser(username);
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('currentUser', username);
+      return;
+    }
+    
+    throw new Error('Neplatné přihlašovací údaje');
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setCurrentUser('');
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('currentUser');
+  };
+
   const addVacationHours = (monthKey: string, hours: number) => {
     const [year, month] = monthKey.split('-');
     const hoursNum = parseFloat(hours.toString());
@@ -335,6 +378,12 @@ export default function App() {
           <div className="mb-8 flex items-center justify-center gap-6">
             <CEPROLogo />
             <DispatcherInfo />
+            <LoginButton 
+              isLoggedIn={isLoggedIn}
+              currentUser={currentUser}
+              onLogin={handleLogin}
+              onLogout={handleLogout}
+            />
           </div>
           
           {/* Informační okna */}
@@ -445,13 +494,22 @@ export default function App() {
           <div className="flex justify-between items-start">
             <div>
               <div className="flex items-center gap-4 mb-2">
-                <Button 
+                {isMobile && (
+                  <button
+                    onClick={() => setIsNavigationOpen(true)}
+                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+                    title="Otevřít navigaci"
+                  >
+                    <Menu className="h-6 w-6 text-gray-600" />
+                  </button>
+                )}
+                <button
                   onClick={() => setCurrentMode(null)}
-                  variant="outline"
-                  size="sm"
+                  className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+                  title="Zpět na výběr"
                 >
-                  ← Zpět na výběr
-                </Button>
+                  <Home className="h-6 w-6 text-gray-600" />
+                </button>
                 <h1>Sledování odpracovaných hodin</h1>
               </div>
               <p className="text-muted-foreground">
@@ -516,21 +574,41 @@ export default function App() {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-2">
-            <Button 
+            {isMobile && (
+              <button
+                onClick={() => setIsNavigationOpen(true)}
+                className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+                title="Otevřít navigaci"
+              >
+                <Menu className="h-6 w-6 text-gray-600" />
+              </button>
+            )}
+            <button
               onClick={() => setCurrentMode(null)}
-              variant="outline"
-              size="sm"
+              className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+              title="Zpět na výběr"
             >
-              ← Zpět na výběr
-            </Button>
-            <h1>Karta řidiče</h1>
+              <Home className="h-6 w-6 text-gray-600" />
+            </button>
+            {isInDriverCardSection && (
+              <button
+                onClick={() => setIsInDriverCardSection(false)}
+                className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+                title="Zpět na sekce"
+              >
+                <ChevronLeft className="h-4 w-4 text-gray-600" />
+              </button>
+            )}
           </div>
           <p className="text-muted-foreground">
             Správa dokladů, interních dokumentů a přístupů do středisek
           </p>
         </div>
         
-        <DriverCard />
+        <DriverCard 
+          onBackToSections={isInDriverCardSection ? () => setIsInDriverCardSection(false) : undefined}
+          onSectionEnter={() => setIsInDriverCardSection(true)}
+        />
       </div>
     </div>
   );
@@ -541,13 +619,22 @@ export default function App() {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-2">
-            <Button 
+            {isMobile && (
+              <button
+                onClick={() => setIsNavigationOpen(true)}
+                className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+                title="Otevřít navigaci"
+              >
+                <Menu className="h-6 w-6 text-gray-600" />
+              </button>
+            )}
+            <button
               onClick={() => setCurrentMode(null)}
-              variant="outline"
-              size="sm"
+              className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+              title="Zpět na výběr"
             >
-              ← Zpět na výběr
-            </Button>
+              <Home className="h-6 w-6 text-gray-600" />
+            </button>
             <h1>Směny</h1>
           </div>
           <p className="text-muted-foreground">
@@ -566,13 +653,22 @@ export default function App() {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-2">
-            <Button 
+            {isMobile && (
+              <button
+                onClick={() => setIsNavigationOpen(true)}
+                className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+                title="Otevřít navigaci"
+              >
+                <Menu className="h-6 w-6 text-gray-600" />
+              </button>
+            )}
+            <button
               onClick={() => setCurrentMode(null)}
-              variant="outline"
-              size="sm"
+              className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+              title="Zpět na výběr"
             >
-              ← Zpět na výběr
-            </Button>
+              <Home className="h-6 w-6 text-gray-600" />
+            </button>
             <h1>Doprava - Kontakty</h1>
           </div>
           <p className="text-muted-foreground">
@@ -597,13 +693,22 @@ export default function App() {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-2">
-            <Button 
+            {isMobile && (
+              <button
+                onClick={() => setIsNavigationOpen(true)}
+                className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+                title="Otevřít navigaci"
+              >
+                <Menu className="h-6 w-6 text-gray-600" />
+              </button>
+            )}
+            <button
               onClick={() => setCurrentMode(null)}
-              variant="outline"
-              size="sm"
+              className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+              title="Zpět na výběr"
             >
-              ← Zpět na výběr
-            </Button>
+              <Home className="h-6 w-6 text-gray-600" />
+            </button>
             <h1>Záznam spotřeby</h1>
           </div>
           <p className="text-muted-foreground">
@@ -628,13 +733,22 @@ export default function App() {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-2">
-            <Button 
+            {isMobile && (
+              <button
+                onClick={() => setIsNavigationOpen(true)}
+                className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+                title="Otevřít navigaci"
+              >
+                <Menu className="h-6 w-6 text-gray-600" />
+              </button>
+            )}
+            <button
               onClick={() => setCurrentMode(null)}
-              variant="outline"
-              size="sm"
+              className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+              title="Zpět na výběr"
             >
-              ← Zpět na výběr
-            </Button>
+              <Home className="h-6 w-6 text-gray-600" />
+            </button>
             <h1>Čerpací stanice</h1>
           </div>
           <p className="text-muted-foreground">
@@ -659,13 +773,22 @@ export default function App() {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-2">
-            <Button 
+            {isMobile && (
+              <button
+                onClick={() => setIsNavigationOpen(true)}
+                className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+                title="Otevřít navigaci"
+              >
+                <Menu className="h-6 w-6 text-gray-600" />
+              </button>
+            )}
+            <button
               onClick={() => setCurrentMode(null)}
-              variant="outline"
-              size="sm"
+              className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+              title="Zpět na výběr"
             >
-              ← Zpět na výběr
-            </Button>
+              <Home className="h-6 w-6 text-gray-600" />
+            </button>
             <h1>Hlášení závad</h1>
           </div>
           <p className="text-muted-foreground">
@@ -673,12 +796,142 @@ export default function App() {
           </p>
         </div>
         
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold mb-2">Hlášení závad</h2>
-          <p className="text-muted-foreground">
-            Tato funkce bude brzy dostupná
-          </p>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+            <div className="text-center mb-6">
+              <div className="text-4xl mb-4">⚠️</div>
+              <h2 className="text-2xl font-bold mb-2">Hlášení závad</h2>
+              <p className="text-muted-foreground">
+                Vyberte typ závady, kterou chcete nahlásit
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              <Button 
+                onClick={() => {
+                  // TODO: Implementovat hlášení závad na čerpacích stanicích
+                  alert('Hlášení závad na čerpacích stanicích - funkce bude brzy dostupná');
+                }}
+                className="w-full h-12 text-lg"
+                variant="outline"
+              >
+                🏪 Hlášení závad na čerpacích stanicích
+              </Button>
+              
+              <Button 
+                onClick={() => {
+                  // TODO: Implementovat hlášení závad na CA
+                  alert('Hlášení závad na CA - funkce bude brzy dostupná');
+                }}
+                className="w-full h-12 text-lg"
+                variant="outline"
+              >
+                🏢 Hlášení závad na CA
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Navigation panel component
+  const NavigationPanel = () => (
+    <div className="fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setIsNavigationOpen(false)}>
+      <div className="fixed left-0 top-0 h-full w-80 bg-white shadow-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold">Navigace</h2>
+            <button
+              onClick={() => setIsNavigationOpen(false)}
+              className="p-2 hover:bg-gray-100 rounded transition-colors"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+          </div>
+          
+          <div className="space-y-3">
+            <Button 
+              onClick={() => {
+                setCurrentMode('entry');
+                setIsNavigationOpen(false);
+              }}
+              className="w-full justify-start h-12 text-lg"
+              variant={currentMode === 'entry' ? 'default' : 'outline'}
+            >
+              Karta řidiče
+            </Button>
+            <Button 
+              onClick={() => {
+                setCurrentMode('time-tracking');
+                setIsNavigationOpen(false);
+              }}
+              className="w-full justify-start h-12 text-lg"
+              variant={currentMode === 'time-tracking' ? 'default' : 'outline'}
+            >
+              Odpracované hodiny
+            </Button>
+            <Button 
+              onClick={() => {
+                setCurrentMode('shifts');
+                setIsNavigationOpen(false);
+              }}
+              className="w-full justify-start h-12 text-lg"
+              variant={currentMode === 'shifts' ? 'default' : 'outline'}
+            >
+              Směny
+            </Button>
+            <Button 
+              onClick={() => {
+                setCurrentMode('transport-contacts');
+                setIsNavigationOpen(false);
+              }}
+              className="w-full justify-start h-12 text-lg"
+              variant={currentMode === 'transport-contacts' ? 'default' : 'outline'}
+            >
+              Doprava - Kontakty
+            </Button>
+            <Button 
+              onClick={() => {
+                setCurrentMode('consumption-record');
+                setIsNavigationOpen(false);
+              }}
+              className="w-full justify-start h-12 text-lg"
+              variant={currentMode === 'consumption-record' ? 'default' : 'outline'}
+            >
+              Záznam spotřeby
+            </Button>
+            <Button 
+              onClick={() => {
+                setCurrentMode('gas-station');
+                setIsNavigationOpen(false);
+              }}
+              className="w-full justify-start h-12 text-lg"
+              variant={currentMode === 'gas-station' ? 'default' : 'outline'}
+            >
+              Čerpací stanice
+            </Button>
+            <Button 
+              onClick={() => {
+                setCurrentMode('fault-reporting');
+                setIsNavigationOpen(false);
+              }}
+              className="w-full justify-start h-12 text-lg"
+              variant={currentMode === 'fault-reporting' ? 'default' : 'outline'}
+            >
+              Hlášení závad
+            </Button>
+            <Button 
+              onClick={() => {
+                setCurrentMode(null);
+                setIsNavigationOpen(false);
+              }}
+              className="w-full justify-start h-12 text-lg mt-4"
+              variant="outline"
+            >
+              🏠 Hlavní stránka
+            </Button>
+          </div>
         </div>
       </div>
     </div>
@@ -690,31 +943,66 @@ export default function App() {
   }
 
   if (currentMode === 'entry') {
-    return <DriverCardMode />;
+    return (
+      <>
+        <DriverCardMode />
+        {isNavigationOpen && <NavigationPanel />}
+      </>
+    );
   }
 
   if (currentMode === 'time-tracking') {
-    return <TimeTrackingMode />;
+    return (
+      <>
+        <TimeTrackingMode />
+        {isNavigationOpen && <NavigationPanel />}
+      </>
+    );
   }
 
   if (currentMode === 'shifts') {
-    return <ShiftsMode />;
+    return (
+      <>
+        <ShiftsMode />
+        {isNavigationOpen && <NavigationPanel />}
+      </>
+    );
   }
 
   if (currentMode === 'transport-contacts') {
-    return <TransportContactsMode />;
+    return (
+      <>
+        <TransportContactsMode />
+        {isNavigationOpen && <NavigationPanel />}
+      </>
+    );
   }
 
   if (currentMode === 'consumption-record') {
-    return <ConsumptionRecordMode />;
+    return (
+      <>
+        <ConsumptionRecordMode />
+        {isNavigationOpen && <NavigationPanel />}
+      </>
+    );
   }
 
   if (currentMode === 'gas-station') {
-    return <GasStationMode />;
+    return (
+      <>
+        <GasStationMode />
+        {isNavigationOpen && <NavigationPanel />}
+      </>
+    );
   }
 
   if (currentMode === 'fault-reporting') {
-    return <FaultReportingMode />;
+    return (
+      <>
+        <FaultReportingMode />
+        {isNavigationOpen && <NavigationPanel />}
+      </>
+    );
   }
 
   return <EntryScreen />;

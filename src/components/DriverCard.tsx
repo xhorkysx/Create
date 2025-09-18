@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
 import { realtimeService } from '../services/realtime';
 import { DriverCardNavigation } from './DriverCardNavigation';
+import { ChevronLeft } from 'lucide-react';
 
 interface DocumentItem {
   id: string;
@@ -13,7 +14,12 @@ interface DocumentItem {
   isExpiringSoon: boolean;
 }
 
-export function DriverCard() {
+interface DriverCardProps {
+  onBackToSections?: () => void;
+  onSectionEnter?: () => void;
+}
+
+export function DriverCard({ onBackToSections, onSectionEnter }: DriverCardProps = {}) {
   const [editingItem, setEditingItem] = useState<{ type: string; id: string } | null>(null);
   const [editForm, setEditForm] = useState({ issueDate: '', expiryDate: '' });
   const [data, setData] = useState({
@@ -37,6 +43,13 @@ export function DriverCard() {
     
     return () => window.removeEventListener('resize', checkIsMobile);
   }, []);
+
+  // Sledování změn activeSection
+  useEffect(() => {
+    if (activeSection && onSectionEnter) {
+      onSectionEnter();
+    }
+  }, [activeSection, onSectionEnter]);
 
   // Načtení dat z API
   useEffect(() => {
@@ -295,7 +308,6 @@ export function DriverCard() {
   if (loading) {
     return (
       <div className="p-6">
-        <h2 className={`font-bold mb-6 ${isMobile ? 'text-xl' : 'text-2xl'}`}>Karta řidiče</h2>
         <div className="text-center py-8">
           <p className={isMobile ? 'text-sm' : 'text-base'}>Načítání dokumentů...</p>
         </div>
@@ -306,7 +318,6 @@ export function DriverCard() {
   if (error) {
     return (
       <div className="p-6">
-        <h2 className={`font-bold mb-6 ${isMobile ? 'text-xl' : 'text-2xl'}`}>Karta řidiče</h2>
         <div className="text-center py-8">
           <p className={`text-red-600 mb-4 ${isMobile ? 'text-sm' : 'text-base'}`}>{error}</p>
           <button 
@@ -322,8 +333,6 @@ export function DriverCard() {
 
   return (
     <div className="p-6">
-      <h2 className={`font-bold mb-6 ${isMobile ? 'text-xl' : 'text-2xl'}`}>Karta řidiče</h2>
-      
       {!activeSection ? (
         <DriverCardNavigation 
           onSectionSelect={setActiveSection}
@@ -331,14 +340,17 @@ export function DriverCard() {
         />
       ) : (
         <div>
-          <div className="mb-6">
-            <button 
-              onClick={() => setActiveSection(null)}
-              className={`flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium ${isMobile ? 'text-sm' : 'text-base'}`}
-            >
-              ← Zpět na výběr sekce
-            </button>
-          </div>
+          {onBackToSections && (
+            <div className="mb-6">
+              <button 
+                onClick={onBackToSections}
+                className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300"
+                title="Zpět na výběr sekce"
+              >
+                <ChevronLeft className="h-4 w-4 text-gray-600" />
+              </button>
+            </div>
+          )}
           
           {activeSection === 'documents' && renderTable('documents', 'Doklady')}
           {activeSection === 'internal' && renderTable('internal', 'Interní dokumenty')}
