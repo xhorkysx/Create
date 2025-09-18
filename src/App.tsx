@@ -31,7 +31,7 @@ interface AppData {
 
 export default function App() {
   const isMobile = useIsMobile();
-  const [currentMode, setCurrentMode] = useState<'entry' | 'time-tracking' | 'shifts' | 'transport-contacts' | 'consumption-record' | null>(null);
+  const [currentMode, setCurrentMode] = useState<'entry' | 'time-tracking' | 'shifts' | 'transport-contacts' | 'consumption-record' | 'gas-station' | 'fault-reporting' | null>(null);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -401,6 +401,20 @@ export default function App() {
           >
             Záznam spotřeby
           </Button>
+          <Button 
+            onClick={() => setCurrentMode('gas-station')}
+            size="lg"
+            className="w-full h-16 text-lg"
+          >
+            Čerpací stanice
+          </Button>
+          <Button 
+            onClick={() => setCurrentMode('fault-reporting')}
+            size="lg"
+            className="w-full h-16 text-lg"
+          >
+            Hlášení závad
+          </Button>
         </div>
         
         {!dbInitialized && (
@@ -608,6 +622,68 @@ export default function App() {
     </div>
   );
 
+  // Gas station mode component
+  const GasStationMode = () => (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-2">
+            <Button 
+              onClick={() => setCurrentMode(null)}
+              variant="outline"
+              size="sm"
+            >
+              ← Zpět na výběr
+            </Button>
+            <h1>Čerpací stanice</h1>
+          </div>
+          <p className="text-muted-foreground">
+            Správa čerpacích stanic a jejich informací
+          </p>
+        </div>
+        
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">🏪</div>
+          <h2 className="text-2xl font-bold mb-2">Čerpací stanice</h2>
+          <p className="text-muted-foreground">
+            Tato funkce bude brzy dostupná
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Fault reporting mode component
+  const FaultReportingMode = () => (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-2">
+            <Button 
+              onClick={() => setCurrentMode(null)}
+              variant="outline"
+              size="sm"
+            >
+              ← Zpět na výběr
+            </Button>
+            <h1>Hlášení závad</h1>
+          </div>
+          <p className="text-muted-foreground">
+            Zaznamenávání a sledování závad a problémů
+          </p>
+        </div>
+        
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold mb-2">Hlášení závad</h2>
+          <p className="text-muted-foreground">
+            Tato funkce bude brzy dostupná
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
   // Main render logic
   if (currentMode === null) {
     return <EntryScreen />;
@@ -631,6 +707,14 @@ export default function App() {
 
   if (currentMode === 'consumption-record') {
     return <ConsumptionRecordMode />;
+  }
+
+  if (currentMode === 'gas-station') {
+    return <GasStationMode />;
+  }
+
+  if (currentMode === 'fault-reporting') {
+    return <FaultReportingMode />;
   }
 
   return <EntryScreen />;
