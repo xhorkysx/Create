@@ -46,7 +46,7 @@ interface AppData {
 
 export default function App() {
   const isMobile = useIsMobile();
-  const [currentMode, setCurrentMode] = useState<'entry' | 'time-tracking' | 'shifts' | 'transport-contacts' | 'consumption-record' | 'gas-station' | 'fault-reporting' | 'fleet' | null>(null);
+  const [currentMode, setCurrentMode] = useState<'entry' | 'time-tracking' | 'shifts' | 'transport-contacts' | 'consumption-record' | 'gas-station' | 'fault-reporting' | null>(null);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -524,6 +524,13 @@ export default function App() {
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 justify-center px-4 max-w-2xl mx-auto">
           <Button 
+            onClick={() => setCurrentMode('shifts')}
+            size="lg"
+            className="w-full h-16 text-lg"
+          >
+            Směny
+          </Button>
+          <Button 
             onClick={() => setCurrentMode('entry')}
             size="lg"
             className="w-full h-16 text-lg"
@@ -536,20 +543,6 @@ export default function App() {
             className="w-full h-16 text-lg"
           >
             Odpracované hodiny
-          </Button>
-          <Button 
-            onClick={() => setCurrentMode('shifts')}
-            size="lg"
-            className="w-full h-16 text-lg"
-          >
-            Směny
-          </Button>
-          <Button 
-            onClick={() => setCurrentMode('transport-contacts')}
-            size="lg"
-            className="w-full h-16 text-lg"
-          >
-            Doprava - Kontakty
           </Button>
           <Button 
             onClick={() => setCurrentMode('consumption-record')}
@@ -573,11 +566,11 @@ export default function App() {
             Hlášení závad
           </Button>
           <Button 
-            onClick={() => setCurrentMode('fleet')}
+            onClick={() => setCurrentMode('transport-contacts')}
             size="lg"
             className="w-full h-16 text-lg"
           >
-            Flotila
+            Doprava - Kontakty
           </Button>
         </div>
         
@@ -1002,45 +995,6 @@ export default function App() {
     </div>
   );
 
-  // Fleet mode component
-  const FleetMode = () => (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-2">
-            {isMobile && (
-              <button
-                onClick={toggleNavigation}
-                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
-                title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
-              >
-                <Menu className="h-6 w-6 text-gray-600" />
-              </button>
-            )}
-            <button
-              onClick={() => setCurrentMode(null)}
-                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
-              title="Zpět na výběr"
-            >
-              <Home className="h-6 w-6 text-gray-600" />
-            </button>
-            <h1>Flotila</h1>
-          </div>
-          <p className="text-muted-foreground">
-            Správa vozidel a vozového parku
-          </p>
-        </div>
-        
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">🚛</div>
-          <h2 className="text-2xl font-bold mb-2">Flotila</h2>
-          <p className="text-muted-foreground">
-            Tato funkce bude brzy dostupná
-          </p>
-        </div>
-      </div>
-    </div>
-  );
 
   // Navigation panel component
   const NavigationPanel = () => (
@@ -1049,6 +1003,16 @@ export default function App() {
         <div className="p-6">
           
           <div className="space-y-3">
+            <Button 
+              onClick={() => {
+                setCurrentMode('shifts');
+                setIsNavigationOpen(false);
+              }}
+              className="w-full justify-start h-12 text-lg"
+              variant={currentMode === 'shifts' ? 'default' : 'outline'}
+            >
+              Směny
+            </Button>
             <Button 
               onClick={() => {
                 setCurrentMode('entry');
@@ -1068,26 +1032,6 @@ export default function App() {
               variant={currentMode === 'time-tracking' ? 'default' : 'outline'}
             >
               Odpracované hodiny
-            </Button>
-            <Button 
-              onClick={() => {
-                setCurrentMode('shifts');
-                setIsNavigationOpen(false);
-              }}
-              className="w-full justify-start h-12 text-lg"
-              variant={currentMode === 'shifts' ? 'default' : 'outline'}
-            >
-              Směny
-            </Button>
-            <Button 
-              onClick={() => {
-                setCurrentMode('transport-contacts');
-                setIsNavigationOpen(false);
-              }}
-              className="w-full justify-start h-12 text-lg"
-              variant={currentMode === 'transport-contacts' ? 'default' : 'outline'}
-            >
-              Doprava - Kontakty
             </Button>
             <Button 
               onClick={() => {
@@ -1121,13 +1065,13 @@ export default function App() {
             </Button>
             <Button 
               onClick={() => {
-                setCurrentMode('fleet');
+                setCurrentMode('transport-contacts');
                 setIsNavigationOpen(false);
               }}
               className="w-full justify-start h-12 text-lg"
-              variant={currentMode === 'fleet' ? 'default' : 'outline'}
+              variant={currentMode === 'transport-contacts' ? 'default' : 'outline'}
             >
-              Flotila
+              Doprava - Kontakty
             </Button>
             <Button 
               onClick={() => {
@@ -1218,14 +1162,6 @@ export default function App() {
     );
   }
 
-  if (currentMode === 'fleet') {
-    return (
-      <>
-        <FleetMode />
-        {isNavigationOpen && <NavigationPanel />}
-      </>
-    );
-  }
 
   return <EntryScreen />;
 }
