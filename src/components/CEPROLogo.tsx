@@ -2,7 +2,7 @@ import React from 'react';
 
 export function CEPROLogo() {
   return (
-    <div className="flex items-center justify-center mb-4">
+    <div className="flex items-center justify-center">
       <img 
         src="/logo.png" 
         alt="Logo" 

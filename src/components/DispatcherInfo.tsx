@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Clock, Users } from 'lucide-react';
@@ -87,11 +87,11 @@ export function DispatcherInfo() {
         raw: true, // Necháme Excel serial numbers jako čísla
         defval: '' // Prázdné buňky jako prázdné stringy
       });
-      console.log('Počet řádků:', jsonData.length);
+      console.log('Počet řádků:', (jsonData as any[]).length);
       
       // Zobrazíme prvních 10 řádků pro debug
       console.log('Prvních 10 řádků:');
-      for (let i = 0; i < Math.min(10, jsonData.length); i++) {
+      for (let i = 0; i < Math.min(10, (jsonData as any[]).length); i++) {
         console.log(`Řádek ${i}:`, jsonData[i]);
       }
       
@@ -106,11 +106,11 @@ export function DispatcherInfo() {
       console.log('- Formát DD.MM.YYYY (ručně):', `${today.getDate().toString().padStart(2, '0')}.${(today.getMonth() + 1).toString().padStart(2, '0')}.${today.getFullYear()}`);
       console.log('- ISO formát:', today.toISOString().split('T')[0]);
       
-      let foundData = null;
+      let foundData: DispatcherData | null = null;
       
-      for (let i = 0; i < jsonData.length; i++) {
+      for (let i = 0; i < (jsonData as any[]).length; i++) {
         const row = jsonData[i];
-        if (row && row.length > 2) {
+        if (row && (row as any[]).length > 2) {
           // Sloupec A (index 0) obsahuje datum, sloupce B (index 1) a C (index 2) obsahují jména
           const dateCell = row[0];
           const cechy = row[1]; // Sloupec B - Čechy
@@ -132,7 +132,7 @@ export function DispatcherInfo() {
               cechy: cechyName,
               morava: moravaName,
               date: todayString
-            };
+            } as DispatcherData;
             console.log('✅ Nalezena data pro dnešní datum na řádku', i, ':', foundData);
             break;
           }
@@ -144,9 +144,9 @@ export function DispatcherInfo() {
       } else {
         // Vrátíme první dostupná data
         console.log('Dnešní datum nenalezeno, hledám první dostupná data...');
-        for (let i = 0; i < jsonData.length; i++) {
+        for (let i = 0; i < (jsonData as any[]).length; i++) {
           const row = jsonData[i];
-          if (row && row.length > 2 && (row[1] || row[2])) {
+          if (row && (row as any[]).length > 2 && (row[1] || row[2])) {
             const cechyName = row[1] ? String(row[1]).trim() : 'Není určeno';
             const moravaName = row[2] ? String(row[2]).trim() : cechyName; // Pokud je Morava prázdná, použij jméno z Čech
             
@@ -269,37 +269,25 @@ export function DispatcherInfo() {
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-center text-lg flex items-center justify-center gap-2">
-          <Users className="h-5 w-5" />
-          Dnes má službu na dispečinku:
-        </CardTitle>
-        <p className="text-center text-sm text-muted-foreground">
-          {getCurrentDate()}
-        </p>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center">
-            <div className="mb-2">
-              <Badge variant="outline" className="text-sm font-medium">
-                ČECHY
-              </Badge>
-            </div>
-            <div className="text-lg font-semibold text-primary">
-              {dispatcherData?.cechy || 'Není určeno'}
-            </div>
+    <Card className="w-48">
+      <CardContent className="p-2">
+        <div className="flex items-center justify-center gap-1 mb-1">
+          <Users className="h-3 w-3 text-blue-600" />
+          <span className="text-xs font-medium text-gray-700">Dispečink</span>
+        </div>
+        
+        <div className="space-y-0.5">
+          <div className="flex items-center text-xs">
+            <span className="text-gray-500" style={{ width: '60px', display: 'inline-block' }}>Čechy:</span>
+            <span className="font-medium text-gray-900 text-xs">
+              {dispatcherData?.cechy || 'N/A'}
+            </span>
           </div>
-          <div className="text-center">
-            <div className="mb-2">
-              <Badge variant="outline" className="text-sm font-medium">
-                MORAVA
-              </Badge>
-            </div>
-            <div className="text-lg font-semibold text-primary">
-              {dispatcherData?.morava || 'Není určeno'}
-            </div>
+          <div className="flex items-center text-xs">
+            <span className="text-gray-500" style={{ width: '60px', display: 'inline-block' }}>Morava:</span>
+            <span className="font-medium text-gray-900 text-xs">
+              {dispatcherData?.morava || 'N/A'}
+            </span>
           </div>
         </div>
       </CardContent>

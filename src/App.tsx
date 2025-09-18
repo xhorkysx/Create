@@ -5,6 +5,7 @@ import { EditEntryDialog } from './components/EditEntryDialog';
 import { DriverCard } from './components/DriverCard';
 import { CEPROLogo } from './components/CEPROLogo';
 import { DispatcherInfo } from './components/DispatcherInfo';
+import { ManagementMessages } from './components/ManagementMessages';
 import { ShiftsInfo } from './components/ShiftsInfo';
 import { Button } from './components/ui/button';
 import { Download, Upload, Database } from 'lucide-react';
@@ -30,7 +31,7 @@ interface AppData {
 
 export default function App() {
   const isMobile = useIsMobile();
-  const [currentMode, setCurrentMode] = useState<'entry' | 'time-tracking' | 'shifts' | 'transport-contacts' | null>(null);
+  const [currentMode, setCurrentMode] = useState<'entry' | 'time-tracking' | 'shifts' | 'transport-contacts' | 'consumption-record' | null>(null);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -330,13 +331,16 @@ export default function App() {
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="text-center space-y-8">
         <div>
-          <div className="mb-8">
+          {/* Logo a dispečink vedle sebe */}
+          <div className="mb-8 flex items-center justify-center gap-6">
             <CEPROLogo />
+            <DispatcherInfo />
           </div>
           
-          {/* Informace o dispečinku */}
-          <div className="mb-6">
-            <DispatcherInfo />
+          {/* Informační okna */}
+          <div className="mb-6 space-y-4">
+            {/* Zprávy od vedení */}
+            <ManagementMessages />
           </div>
           
           {dbInitialized && (
@@ -389,6 +393,13 @@ export default function App() {
             className="w-full h-16 text-lg"
           >
             Doprava - Kontakty
+          </Button>
+          <Button 
+            onClick={() => setCurrentMode('consumption-record')}
+            size="lg"
+            className="w-full h-16 text-lg"
+          >
+            Záznam spotřeby
           </Button>
         </div>
         
@@ -566,6 +577,37 @@ export default function App() {
     </div>
   );
 
+  // Consumption record mode component
+  const ConsumptionRecordMode = () => (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-2">
+            <Button 
+              onClick={() => setCurrentMode(null)}
+              variant="outline"
+              size="sm"
+            >
+              ← Zpět na výběr
+            </Button>
+            <h1>Záznam spotřeby</h1>
+          </div>
+          <p className="text-muted-foreground">
+            Sledování a zaznamenávání spotřeby paliva a dalších nákladů
+          </p>
+        </div>
+        
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">⛽</div>
+          <h2 className="text-2xl font-bold mb-2">Záznam spotřeby</h2>
+          <p className="text-muted-foreground">
+            Tato funkce bude brzy dostupná
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
   // Main render logic
   if (currentMode === null) {
     return <EntryScreen />;
@@ -585,6 +627,10 @@ export default function App() {
 
   if (currentMode === 'transport-contacts') {
     return <TransportContactsMode />;
+  }
+
+  if (currentMode === 'consumption-record') {
+    return <ConsumptionRecordMode />;
   }
 
   return <EntryScreen />;

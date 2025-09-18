@@ -24,6 +24,19 @@ export function DriverCard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<'documents' | 'internal' | 'centers' | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detekce velikosti obrazovky
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
 
   // Načtení dat z API
   useEffect(() => {
@@ -150,17 +163,13 @@ export function DriverCard() {
       return dateA.getTime() - dateB.getTime();
     });
 
-    // Najdeme nejdelší název dokladu pro nastavení šířky prvního sloupce
-    const maxNameLength = Math.max(...items.map(item => item.name.length));
-    const nameColumnWidth = Math.max(maxNameLength * 8 + 20, 150); // 8px na znak + padding, minimum 150px
-
     return (
       <div className="mb-8">
-        <h3 className="text-xl font-bold mb-4 text-blue-600">{title}</h3>
+        <h3 className={`font-bold mb-4 text-blue-600 ${isMobile ? 'text-lg' : 'text-xl'}`}>{title}</h3>
         <div className="border rounded-lg p-4">
           <div className="space-y-4">
             {items.map((item, index) => (
-              <div key={item.id} className={`py-3 ${index < items.length - 1 ? 'border-b border-gray-200' : ''}`}>
+              <div key={item.id} className={`${isMobile ? 'py-2' : 'py-3'} ${index < items.length - 1 ? 'border-b border-gray-200' : ''}`}>
                 {(() => {
                   const isEditing = editingItem?.type === type && editingItem?.id === item.id;
                   console.log('Rendering item:', item.id, 'isEditing:', isEditing, 'editingItem:', editingItem);
@@ -168,22 +177,21 @@ export function DriverCard() {
                 })() ? (
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Datum vypršení platnosti</label>
+                      <label className={`block font-medium text-gray-700 mb-1 ${isMobile ? 'text-xs' : 'text-xs'}`}>Datum vypršení platnosti</label>
                       <input
                         type="date"
                         value={editForm.expiryDate}
                         onChange={(e) => setEditForm(prev => ({ ...prev, expiryDate: e.target.value }))}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className={`w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${isMobile ? 'text-xs' : 'text-xs'}`}
                       />
                     </div>
                     <div className="flex gap-2 mt-3">
                       <button 
                         onClick={saveEdit}
-                        className="flex-1 px-4 py-2 rounded text-base font-bold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm border border-green-600"
+                        className={`flex-1 px-4 py-2 rounded font-bold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm border border-green-600 ${isMobile ? 'text-sm' : 'text-base'}`}
                         style={{ 
                           backgroundColor: '#16a34a', 
                           color: '#ffffff', 
-                          fontSize: '16px', 
                           fontWeight: 'bold',
                           border: '2px solid #16a34a'
                         }}
@@ -192,46 +200,89 @@ export function DriverCard() {
                       </button>
                       <button 
                         onClick={cancelEdit}
-                        className="flex-1 px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                        className={`flex-1 px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm ${isMobile ? 'text-xs' : 'text-sm'}`}
                       >
                         ✗ Zrušit
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-6 text-lg">
-                    <div className="font-semibold text-lg flex-shrink-0" style={{ width: `${nameColumnWidth}px` }}>
-                      {item.name}
-                    </div>
-                    <div className="font-medium flex-shrink-0" style={{ minWidth: '100px' }}>
-                      {formatDate(item.expiryDate)}
-                    </div>
-                    <div 
-                      className="font-medium flex-shrink-0 text-center"
-                      style={{
-                        color: item.daysRemaining < 0 ? '#dc2626' : 
-                               item.daysRemaining <= getWarningThreshold(item, type) ? '#ea580c' : 
-                               '#16a34a',
-                        minWidth: '80px'
-                      }}
-                    >
-                      {item.daysRemaining}
-                    </div>
-                    <div className="flex-shrink-0">
-                      <span 
-                        className="px-2 py-1 rounded text-xs font-medium"
-                        style={getStatusStyle(item, type)}
-                      >
-                        {getStatusText(item, type)}
-                      </span>
-                    </div>
-                    <button 
-                      onClick={() => startEditing(type, item.id)}
-                      className="ml-auto px-3 py-1 border border-gray-300 rounded text-xs hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 flex-shrink-0"
-                    >
-                      Upravit
-                    </button>
-                  </div>
+                  <>
+                    {!isMobile ? (
+                      /* Desktop layout - horizontal */
+                      <div className="flex items-center gap-6 text-lg">
+                        <div className="font-semibold text-lg flex-shrink-0" style={{ minWidth: '200px' }}>
+                          {item.name}
+                        </div>
+                        <div className="font-medium flex-shrink-0" style={{ minWidth: '100px' }}>
+                          {formatDate(item.expiryDate)}
+                        </div>
+                        <div 
+                          className="font-medium flex-shrink-0 text-center"
+                          style={{
+                            color: item.daysRemaining < 0 ? '#dc2626' : 
+                                   item.daysRemaining <= getWarningThreshold(item, type) ? '#ea580c' : 
+                                   '#16a34a',
+                            minWidth: '80px'
+                          }}
+                        >
+                          {item.daysRemaining}
+                        </div>
+                        <div className="flex-shrink-0">
+                          <span 
+                            className="px-2 py-1 rounded text-xs font-medium"
+                            style={getStatusStyle(item, type)}
+                          >
+                            {getStatusText(item, type)}
+                          </span>
+                        </div>
+                        <button 
+                          onClick={() => startEditing(type, item.id)}
+                          className="ml-auto px-3 py-1 border border-gray-300 rounded text-xs hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 flex-shrink-0"
+                        >
+                          Upravit
+                        </button>
+                      </div>
+                    ) : (
+                      /* Mobile layout - vertical */
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-start">
+                          <div className="font-semibold text-sm flex-1 pr-2">
+                            {item.name}
+                          </div>
+                          <button 
+                            onClick={() => startEditing(type, item.id)}
+                            className="px-2 py-1 border border-gray-300 rounded text-xs hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 flex-shrink-0"
+                          >
+                            Upravit
+                          </button>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <div className="text-gray-600">
+                            Vyprší: {formatDate(item.expiryDate)}
+                          </div>
+                          <div 
+                            className="font-medium"
+                            style={{
+                              color: item.daysRemaining < 0 ? '#dc2626' : 
+                                     item.daysRemaining <= getWarningThreshold(item, type) ? '#ea580c' : 
+                                     '#16a34a'
+                            }}
+                          >
+                            {item.daysRemaining} dní
+                          </div>
+                        </div>
+                        <div className="flex justify-end">
+                          <span 
+                            className="px-2 py-1 rounded text-xs font-medium"
+                            style={getStatusStyle(item, type)}
+                          >
+                            {getStatusText(item, type)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             ))}
@@ -244,9 +295,9 @@ export function DriverCard() {
   if (loading) {
     return (
       <div className="p-6">
-        <h2 className="text-2xl font-bold mb-6">Karta řidiče</h2>
+        <h2 className={`font-bold mb-6 ${isMobile ? 'text-xl' : 'text-2xl'}`}>Karta řidiče</h2>
         <div className="text-center py-8">
-          <p>Načítání dokumentů...</p>
+          <p className={isMobile ? 'text-sm' : 'text-base'}>Načítání dokumentů...</p>
         </div>
       </div>
     );
@@ -255,12 +306,12 @@ export function DriverCard() {
   if (error) {
     return (
       <div className="p-6">
-        <h2 className="text-2xl font-bold mb-6">Karta řidiče</h2>
+        <h2 className={`font-bold mb-6 ${isMobile ? 'text-xl' : 'text-2xl'}`}>Karta řidiče</h2>
         <div className="text-center py-8">
-          <p className="text-red-600 mb-4">{error}</p>
+          <p className={`text-red-600 mb-4 ${isMobile ? 'text-sm' : 'text-base'}`}>{error}</p>
           <button 
             onClick={loadDocuments}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className={`px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 ${isMobile ? 'text-sm' : 'text-base'}`}
           >
             Zkusit znovu
           </button>
@@ -271,7 +322,7 @@ export function DriverCard() {
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6">Karta řidiče</h2>
+      <h2 className={`font-bold mb-6 ${isMobile ? 'text-xl' : 'text-2xl'}`}>Karta řidiče</h2>
       
       {!activeSection ? (
         <DriverCardNavigation 
@@ -283,7 +334,7 @@ export function DriverCard() {
           <div className="mb-6">
             <button 
               onClick={() => setActiveSection(null)}
-              className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
+              className={`flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium ${isMobile ? 'text-sm' : 'text-base'}`}
             >
               ← Zpět na výběr sekce
             </button>
