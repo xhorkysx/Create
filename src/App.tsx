@@ -12,6 +12,7 @@ import { ConsumptionDialog } from './components/ConsumptionDialog';
 import { ConsumptionCalendar } from './components/ConsumptionCalendar';
 import { ConsumptionChart } from './components/ConsumptionChart';
 import { UserManagement } from './components/UserManagement';
+import { DesktopLayout } from './components/DesktopLayout';
 import { Button } from './components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from './components/ui/sheet';
@@ -75,6 +76,7 @@ function AppContent() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isConsumptionDialogOpen, setIsConsumptionDialogOpen] = useState(false);
   const [editingConsumption, setEditingConsumption] = useState(null);
+  const [currentChartMonth, setCurrentChartMonth] = useState(new Date());
 
   // Load time entries from database
   const loadTimeEntries = async () => {
@@ -445,129 +447,144 @@ function AppContent() {
     );
   }
 
-  // Entry screen component
-  const EntryScreen = () => (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="text-center space-y-8">
-        <div>
-          {/* Logo a dispečink vedle sebe */}
-          <div className="mb-8 flex items-center justify-center gap-6">
-            <CEPROLogo />
-            <DispatcherInfo />
-            <LoginButton 
-              showRegisterButton={user?.role === 'admin'}
-            />
-          </div>
-          
-          {/* Informační okna */}
-          <div className="mb-6 space-y-4">
-            {/* Zprávy od vedení */}
-            <ManagementMessages />
-          </div>
-          
-          {dbInitialized && (
-            <div className="mt-4 flex flex-col items-center gap-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                <Database className="h-4 w-4" />
-                Databáze připojena
+  // Entry screen component - now using DesktopLayout for desktop, mobile fallback for small screens
+  const EntryScreen = () => {
+    if (isMobile) {
+      // Mobile layout - keep original design
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center space-y-8">
+            <div>
+              {/* Logo a dispečink vedle sebe */}
+              <div className="mb-8 flex items-center justify-center gap-6">
+                <CEPROLogo />
+                <DispatcherInfo />
+                <LoginButton 
+                  showRegisterButton={user?.role === 'admin'}
+                />
               </div>
-              {realtimeStatus.isConnected && (
-                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
-                  realtimeStatus.usePolling 
-                    ? 'bg-yellow-100 text-yellow-800' 
-                    : 'bg-blue-100 text-blue-800'
-                }`}>
-                  <div className={`h-2 w-2 rounded-full ${
-                    realtimeStatus.usePolling ? 'bg-yellow-600' : 'bg-blue-600'
-                  }`}></div>
-                  {realtimeStatus.usePolling ? 'Synchronizace (polling)' : 'Real-time synchronizace'}
+              
+              {/* Informační okna */}
+              <div className="mb-6 space-y-4">
+                {/* Zprávy od vedení */}
+                <ManagementMessages />
+              </div>
+              
+              {dbInitialized && (
+                <div className="mt-4 flex flex-col items-center gap-2">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                    <Database className="h-4 w-4" />
+                    Databáze připojena
+                  </div>
+                  {realtimeStatus.isConnected && (
+                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
+                      realtimeStatus.usePolling 
+                        ? 'bg-yellow-100 text-yellow-800' 
+                        : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      <div className={`h-2 w-2 rounded-full ${
+                        realtimeStatus.usePolling ? 'bg-yellow-600' : 'bg-blue-600'
+                      }`}></div>
+                      {realtimeStatus.usePolling ? 'Synchronizace (polling)' : 'Real-time synchronizace'}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          )}
-        </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 justify-center px-4 max-w-2xl mx-auto">
-          <Button 
-            onClick={() => setCurrentMode('shifts')}
-            size="lg"
-            className="w-full h-16 text-lg"
-          >
-            Směny
-          </Button>
-          <Button 
-            onClick={() => setCurrentMode('entry')}
-            size="lg"
-            className="w-full h-16 text-lg"
-          >
-            Karta řidiče
-          </Button>
-          <Button 
-            onClick={() => setCurrentMode('time-tracking')}
-            size="lg"
-            className="w-full h-16 text-lg"
-          >
-            Odpracované hodiny
-          </Button>
-          <Button 
-            onClick={() => setCurrentMode('consumption-record')}
-            size="lg"
-            className="w-full h-16 text-lg"
-          >
-            Záznam spotřeby
-          </Button>
-          <Button 
-            onClick={() => setCurrentMode('gas-station')}
-            size="lg"
-            className="w-full h-16 text-lg"
-          >
-            Čerpací stanice
-          </Button>
-          <Button 
-            onClick={() => setCurrentMode('fault-reporting')}
-            size="lg"
-            className="w-full h-16 text-lg"
-          >
-            Hlášení závad
-          </Button>
-          <Button 
-            onClick={() => setCurrentMode('transport-contacts')}
-            size="lg"
-            className="w-full h-16 text-lg"
-          >
-            Doprava - Kontakty
-          </Button>
-          {user?.role === 'admin' && (
-            <Button 
-              onClick={() => setCurrentMode('user-management')}
-              size="lg"
-              className="w-full h-16 text-lg"
-            >
-              <Users className="h-5 w-5 mr-2" />
-              Správa uživatelů
-            </Button>
-          )}
-        </div>
-        
-        {!dbInitialized && (
-          <div className="mt-8 text-center">
-            <p className="text-muted-foreground mb-4">
-              Databáze není dostupná. Používá se localStorage.
-            </p>
-            <Button 
-              onClick={initializeDatabase}
-              variant="outline"
-              className="flex items-center gap-2"
-              disabled={isInitializing}
-            >
-              <Database className="h-4 w-4" />
-              {isInitializing ? 'Inicializace...' : 'Zkusit připojit databázi'}
-            </Button>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 justify-center px-4 max-w-2xl mx-auto">
+              <Button 
+                onClick={() => setCurrentMode('shifts')}
+                size="lg"
+                className="w-full h-16 text-lg"
+              >
+                Směny
+              </Button>
+              <Button 
+                onClick={() => setCurrentMode('entry')}
+                size="lg"
+                className="w-full h-16 text-lg"
+              >
+                Karta řidiče
+              </Button>
+              <Button 
+                onClick={() => setCurrentMode('time-tracking')}
+                size="lg"
+                className="w-full h-16 text-lg"
+              >
+                Odpracované hodiny
+              </Button>
+              <Button 
+                onClick={() => setCurrentMode('consumption-record')}
+                size="lg"
+                className="w-full h-16 text-lg"
+              >
+                Záznam spotřeby
+              </Button>
+              <Button 
+                onClick={() => setCurrentMode('gas-station')}
+                size="lg"
+                className="w-full h-16 text-lg"
+              >
+                Čerpací stanice
+              </Button>
+              <Button 
+                onClick={() => setCurrentMode('fault-reporting')}
+                size="lg"
+                className="w-full h-16 text-lg"
+              >
+                Hlášení závad
+              </Button>
+              <Button 
+                onClick={() => setCurrentMode('transport-contacts')}
+                size="lg"
+                className="w-full h-16 text-lg"
+              >
+                Doprava - Kontakty
+              </Button>
+              {user?.role === 'admin' && (
+                <Button 
+                  onClick={() => setCurrentMode('user-management')}
+                  size="lg"
+                  className="w-full h-16 text-lg"
+                >
+                  <Users className="h-5 w-5 mr-2" />
+                  Správa uživatelů
+                </Button>
+              )}
+            </div>
+            
+            {!dbInitialized && (
+              <div className="mt-8 text-center">
+                <p className="text-muted-foreground mb-4">
+                  Databáze není dostupná. Používá se localStorage.
+                </p>
+                <Button 
+                  onClick={initializeDatabase}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  disabled={isInitializing}
+                >
+                  <Database className="h-4 w-4" />
+                  {isInitializing ? 'Inicializace...' : 'Zkusit připojit databázi'}
+                </Button>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-    </div>
-  );
+        </div>
+      );
+    }
+
+    // Desktop layout - use new DesktopLayout component
+    return (
+      <DesktopLayout 
+        currentMode={currentMode}
+        onModeChange={setCurrentMode}
+        dbInitialized={dbInitialized}
+        realtimeStatus={realtimeStatus}
+      />
+    );
+  };
 
   // Time tracking mode component
   const TimeTrackingMode = () => (
@@ -1100,7 +1117,43 @@ function AppContent() {
     </Sheet>
   );
 
-  // Main render logic
+  // Main render logic - pro desktop vždy použij DesktopLayout
+  if (!isMobile) {
+    return (
+      <DesktopLayout 
+        currentMode={currentMode}
+        onModeChange={setCurrentMode}
+        dbInitialized={dbInitialized}
+        realtimeStatus={realtimeStatus}
+        entries={entries}
+        onAddEntry={addEntry}
+        onDeleteEntry={deleteEntry}
+        onEditEntry={editEntry}
+        defaultHourlyRate={defaultHourlyRate}
+        realSalaries={realSalaries}
+        onSetRealSalary={setRealSalary}
+        onAddVacationHours={addVacationHours}
+        consumptionEntries={consumptionEntries}
+        selectedDate={selectedDate}
+        onDateSelect={setSelectedDate}
+        onAddConsumption={(dateString) => {
+          const [year, month, day] = dateString.split('-').map(Number);
+          setSelectedDate(new Date(year, month - 1, day));
+          setIsConsumptionDialogOpen(true);
+          setEditingConsumption(null);
+        }}
+        onEditConsumption={(entry) => {
+          setEditingConsumption(entry);
+          setIsConsumptionDialogOpen(true);
+        }}
+        onDeleteConsumption={deleteConsumptionEntry}
+        onMonthChange={setCurrentChartMonth}
+        currentChartMonth={currentChartMonth}
+      />
+    );
+  }
+
+  // Mobile layout - hlavní stránka
   if (currentMode === null) {
     return (
       <>
@@ -1110,6 +1163,7 @@ function AppContent() {
     );
   }
 
+  // Mobile módy (pouze pro mobilní zařízení)
   if (currentMode === 'entry') {
     return (
       <>

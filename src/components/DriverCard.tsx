@@ -332,7 +332,7 @@ export function DriverCard({ onBackToSections, onSectionEnter }: DriverCardProps
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 w-full">
       {!activeSection ? (
         <DriverCardNavigation 
           onSectionSelect={setActiveSection}

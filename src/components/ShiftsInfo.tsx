@@ -249,7 +249,7 @@ export const ShiftsInfo: React.FC = () => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+    <div className="bg-white rounded-lg shadow-md p-6 mb-6 w-full">
       {/* Header - responsive */}
       <div className="mb-4">
         {!isMobile ? (

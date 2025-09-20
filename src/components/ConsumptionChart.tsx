@@ -75,7 +75,7 @@ export function ConsumptionChart({ entries, currentMonth }: ConsumptionChartProp
   
 
   return (
-    <Card className="relative z-10">
+    <Card className="relative z-10 w-full">
       <CardHeader>
         <CardTitle>
           Graf spotřeby - {currentMonth.toLocaleDateString('cs-CZ', { month: 'long', year: 'numeric' })}

@@ -355,7 +355,7 @@ export function ManagementMessages() {
 
   if (isLoading) {
     return (
-      <Card className="w-full mx-auto" style={{ width: '32rem', maxWidth: '32rem' }}>
+      <Card className="w-full">
         <CardHeader className="pb-3">
           <CardTitle className="text-center text-lg flex items-center justify-center gap-2">
             <MessageSquare className="h-5 w-5" />
@@ -380,7 +380,7 @@ export function ManagementMessages() {
 
   return (
     <>
-      <Card className="w-full mx-auto" style={{ width: '32rem', maxWidth: '32rem' }}>
+      <Card className="w-full h-full flex flex-col">
         <CardHeader className="pb-3">
           <div className="flex justify-center items-center gap-2 mb-2">
             <Button
@@ -418,7 +418,7 @@ export function ManagementMessages() {
             )}
           </div>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 flex-1 flex flex-col">
           {displayedMessages.length === 0 ? (
             <div className="text-center py-6 text-gray-500">
               <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
@@ -426,7 +426,7 @@ export function ManagementMessages() {
             </div>
           ) : (
             <>
-              <div className="space-y-4">
+              <div className="space-y-4 flex-1">
                 {displayedMessages.map((message) => renderMessage(message))}
               </div>
               

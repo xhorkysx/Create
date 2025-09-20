@@ -132,7 +132,7 @@ export function TimeTrackingTabs({ entries, onDeleteEntry, onEditEntry, realSala
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 lg:flex lg:w-auto lg:h-auto">
           {tabs.map(tab => (
