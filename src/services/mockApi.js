@@ -197,6 +197,43 @@ class MockApiService {
       }
     ];
 
+    // Mock zprávy od vedení
+    this.mockMessages = [
+      {
+        id: '1',
+        title: 'Důležité upozornění',
+        content: 'Od příštího týdne se mění rozvrh směn. Více informací najdete v emailu.',
+        type: 'warning',
+        date: '2024-01-15',
+        author: 'Vedení',
+        isRead: false,
+        createdAt: '2024-01-15T10:00:00Z',
+        updatedAt: '2024-01-15T10:00:00Z'
+      },
+      {
+        id: '2',
+        title: 'Nové bezpečnostní předpisy',
+        content: 'Prosíme o dodržování nových bezpečnostních předpisů při práci s vozidly.',
+        type: 'info',
+        date: '2024-01-14',
+        author: 'Bezpečnostní oddělení',
+        isRead: true,
+        createdAt: '2024-01-14T14:30:00Z',
+        updatedAt: '2024-01-14T14:30:00Z'
+      },
+      {
+        id: '3',
+        title: 'Úspěšné dokončení projektu',
+        content: 'Děkujeme všem za úspěšné dokončení projektu modernizace vozového parku.',
+        type: 'success',
+        date: '2024-01-13',
+        author: 'Vedení',
+        isRead: true,
+        createdAt: '2024-01-13T09:15:00Z',
+        updatedAt: '2024-01-13T09:15:00Z'
+      }
+    ];
+
     // Aktuálně přihlášený uživatel
     this.currentUser = null;
   }
@@ -388,12 +425,89 @@ class MockApiService {
     return { message: 'Uživatel byl úspěšně smazán' };
   }
 
+  // SPRÁVA ZPRÁV API
+  async getMessages() {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    return { messages: this.mockMessages };
+  }
+
+  async addMessage(messageData) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Kontrola, zda je uživatel admin
+    if (!this.currentUser || this.currentUser.role !== 'admin') {
+      throw new Error('Nedostatečná oprávnění. Pouze administrátoři mohou přidávat zprávy.');
+    }
+    
+    const newMessage = {
+      id: Date.now().toString(),
+      title: messageData.title,
+      content: messageData.content,
+      type: messageData.type,
+      date: new Date().toISOString().split('T')[0],
+      author: messageData.author,
+      isRead: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    this.mockMessages.unshift(newMessage);
+    
+    return {
+      message: 'Zpráva byla úspěšně vytvořena',
+      data: newMessage
+    };
+  }
+
+  async updateMessage(id, messageData) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Kontrola, zda je uživatel admin
+    if (!this.currentUser || this.currentUser.role !== 'admin') {
+      throw new Error('Nedostatečná oprávnění. Pouze administrátoři mohou upravovat zprávy.');
+    }
+    
+    const index = this.mockMessages.findIndex(message => message.id === id);
+    if (index === -1) {
+      throw new Error('Zpráva nebyla nalezena');
+    }
+    
+    this.mockMessages[index] = {
+      ...this.mockMessages[index],
+      ...messageData,
+      updatedAt: new Date().toISOString()
+    };
+    
+    return {
+      message: 'Zpráva byla úspěšně aktualizována',
+      data: this.mockMessages[index]
+    };
+  }
+
+  async deleteMessage(id) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Kontrola, zda je uživatel admin
+    if (!this.currentUser || this.currentUser.role !== 'admin') {
+      throw new Error('Nedostatečná oprávnění. Pouze administrátoři mohou mazat zprávy.');
+    }
+    
+    const index = this.mockMessages.findIndex(message => message.id === id);
+    if (index === -1) {
+      throw new Error('Zpráva nebyla nalezena');
+    }
+    
+    this.mockMessages.splice(index, 1);
+    
+    return { message: 'Zpráva byla úspěšně smazána' };
+  }
+
   // Inicializace databáze (mock)
   async initDatabase() {
     await new Promise(resolve => setTimeout(resolve, 1000));
     return { 
       message: 'Database initialized successfully (mock mode)',
-      tables: ['users', 'time_entries', 'driver_documents', 'app_settings']
+      tables: ['users', 'time_entries', 'driver_documents', 'app_settings', 'management_messages']
     };
   }
 }

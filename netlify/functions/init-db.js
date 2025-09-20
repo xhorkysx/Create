@@ -71,6 +71,21 @@ exports.handler = async (event, context) => {
       )
     `;
 
+    // Vytvoření tabulky pro zprávy od vedení
+    await sql`
+      CREATE TABLE IF NOT EXISTS management_messages (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(200) NOT NULL,
+        content TEXT NOT NULL,
+        type VARCHAR(20) NOT NULL CHECK (type IN ('info', 'warning', 'success', 'urgent')),
+        date DATE NOT NULL,
+        author VARCHAR(100) NOT NULL,
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
     // Vložení výchozích dokumentů
     const defaultDocuments = [
       // Doklady
@@ -132,7 +147,7 @@ exports.handler = async (event, context) => {
       },
       body: JSON.stringify({ 
         message: 'Database initialized successfully',
-        tables: ['users', 'time_entries', 'driver_documents', 'app_settings']
+        tables: ['users', 'time_entries', 'driver_documents', 'app_settings', 'management_messages']
       })
     };
 

@@ -14,6 +14,7 @@ import { ConsumptionChart } from './components/ConsumptionChart';
 import { UserManagement } from './components/UserManagement';
 import { Button } from './components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from './components/ui/sheet';
 import { Download, Upload, Database, ChevronLeft, Home, Menu, Users } from 'lucide-react';
 import { useIsMobile } from './components/ui/use-mobile';
 import { apiService } from './services/api';
@@ -61,15 +62,13 @@ function AppContent() {
   const [isInDriverCardSection, setIsInDriverCardSection] = useState(false);
   const [isNavigationOpen, setIsNavigationOpen] = useState(false);
   
-  const toggleNavigation = useCallback(() => {
+  const toggleNavigation = () => {
     console.log('=== HAMBURGER CLICKED ===');
-    console.log('Toggle navigation, current state:', isNavigationOpen);
-    console.log('isMobile:', isMobile);
     setIsNavigationOpen(prev => {
       console.log('Previous state:', prev, 'New state:', !prev);
       return !prev;
     });
-  }, [isNavigationOpen, isMobile]);
+  };
   
   // Consumption record states
   const [consumptionEntries, setConsumptionEntries] = useState([]);
@@ -428,14 +427,19 @@ function AppContent() {
   if (isInitializing) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <div>
-            <h1 className="text-2xl font-bold mb-2">Inicializace aplikace</h1>
-            <p className="text-muted-foreground">
-              Připravujeme databázi a načítáme data...
-            </p>
+        <div className="text-center space-y-6">
+          <div 
+            className="animate-logo-grow"
+            style={{
+              animation: 'logo-grow 2s ease-in-out infinite'
+            }}
+          >
+            <CEPROLogo />
           </div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">
+            Připravujeme databázi a načítáme data...
+          </p>
         </div>
       </div>
     );
@@ -653,15 +657,13 @@ function AppContent() {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-2">
-            {isMobile && (
-              <button
-                onClick={toggleNavigation}
-                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
-                title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
-              >
-                <Menu className="h-6 w-6 text-gray-600" />
-              </button>
-            )}
+            <button
+              onClick={toggleNavigation}
+              className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
+              title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
+            >
+              <Menu className="h-6 w-6 text-gray-600" />
+            </button>
             <button
               onClick={() => setCurrentMode(null)}
                     className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
@@ -698,15 +700,13 @@ function AppContent() {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-2">
-            {isMobile && (
-              <button
-                onClick={toggleNavigation}
-                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
-                title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
-              >
-                <Menu className="h-6 w-6 text-gray-600" />
-              </button>
-            )}
+            <button
+              onClick={toggleNavigation}
+              className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
+              title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
+            >
+              <Menu className="h-6 w-6 text-gray-600" />
+            </button>
             <button
               onClick={() => setCurrentMode(null)}
                     className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
@@ -732,15 +732,13 @@ function AppContent() {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-2">
-            {isMobile && (
-              <button
-                onClick={toggleNavigation}
-                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
-                title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
-              >
-                <Menu className="h-6 w-6 text-gray-600" />
-              </button>
-            )}
+            <button
+              onClick={toggleNavigation}
+              className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
+              title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
+            >
+              <Menu className="h-6 w-6 text-gray-600" />
+            </button>
             <button
               onClick={() => setCurrentMode(null)}
                     className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
@@ -799,7 +797,7 @@ function AppContent() {
               {isMobile && (
                 <button
                   onClick={toggleNavigation}
-                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
+                  className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
                   title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
                 >
                   <Menu className="h-6 w-6 text-gray-600" />
@@ -864,15 +862,13 @@ function AppContent() {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-2">
-            {isMobile && (
-              <button
-                onClick={toggleNavigation}
-                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
-                title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
-              >
-                <Menu className="h-6 w-6 text-gray-600" />
-              </button>
-            )}
+            <button
+              onClick={toggleNavigation}
+              className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
+              title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
+            >
+              <Menu className="h-6 w-6 text-gray-600" />
+            </button>
             <button
               onClick={() => setCurrentMode(null)}
                     className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
@@ -904,15 +900,13 @@ function AppContent() {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-2">
-            {isMobile && (
-              <button
-                onClick={toggleNavigation}
-                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
-                title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
-              >
-                <Menu className="h-6 w-6 text-gray-600" />
-              </button>
-            )}
+            <button
+              onClick={toggleNavigation}
+              className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
+              title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
+            >
+              <Menu className="h-6 w-6 text-gray-600" />
+            </button>
             <button
               onClick={() => setCurrentMode(null)}
                     className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
@@ -972,15 +966,13 @@ function AppContent() {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-2">
-            {isMobile && (
-              <button
-                onClick={toggleNavigation}
-                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
-                title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
-              >
-                <Menu className="h-6 w-6 text-gray-600" />
-              </button>
-            )}
+            <button
+              onClick={toggleNavigation}
+              className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
+              title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
+            >
+              <Menu className="h-6 w-6 text-gray-600" />
+            </button>
             <button
               onClick={() => setCurrentMode(null)}
                     className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
@@ -1001,110 +993,111 @@ function AppContent() {
   );
 
 
-  // Navigation panel component
+  // Navigation panel component using Sheet
   const NavigationPanel = () => (
-    <div className="fixed inset-0 z-40 bg-black bg-opacity-50" onClick={() => setIsNavigationOpen(false)}>
-      <div className="absolute left-4 w-80 bg-white shadow-lg rounded-lg" style={{ marginTop: '60px' }} onClick={(e) => e.stopPropagation()}>
-        <div className="p-6">
-          
-          <div className="space-y-3">
+    <Sheet open={isNavigationOpen} onOpenChange={setIsNavigationOpen}>
+      <SheetContent side="top" className="w-64 h-auto" style={{ left: '16px', right: 'auto', top: '16px', bottom: 'auto', width: '256px' }}>
+        <SheetHeader>
+          <SheetTitle>Navigace</SheetTitle>
+        </SheetHeader>
+        <div className="mt-6 space-y-3">
+          <Button 
+            onClick={() => {
+              setCurrentMode(null);
+              setIsNavigationOpen(false);
+            }}
+            className="w-full justify-start h-12 text-lg"
+            variant={currentMode === null ? 'default' : 'outline'}
+          >
+            <Home className="h-4 w-4 mr-2" />
+            Domů
+          </Button>
+          <Button 
+            onClick={() => {
+              setCurrentMode('shifts');
+              setIsNavigationOpen(false);
+            }}
+            className="w-full justify-start h-12 text-lg"
+            variant={currentMode === 'shifts' ? 'default' : 'outline'}
+          >
+            Směny
+          </Button>
+          <Button 
+            onClick={() => {
+              setCurrentMode('entry');
+              setIsNavigationOpen(false);
+            }}
+            className="w-full justify-start h-12 text-lg"
+            variant={currentMode === 'entry' ? 'default' : 'outline'}
+          >
+            Karta řidiče
+          </Button>
+          <Button 
+            onClick={() => {
+              setCurrentMode('time-tracking');
+              setIsNavigationOpen(false);
+            }}
+            className="w-full justify-start h-12 text-lg"
+            variant={currentMode === 'time-tracking' ? 'default' : 'outline'}
+          >
+            Odpracované hodiny
+          </Button>
+          <Button 
+            onClick={() => {
+              setCurrentMode('consumption-record');
+              setIsNavigationOpen(false);
+            }}
+            className="w-full justify-start h-12 text-lg"
+            variant={currentMode === 'consumption-record' ? 'default' : 'outline'}
+          >
+            Záznam spotřeby
+          </Button>
+          <Button 
+            onClick={() => {
+              setCurrentMode('gas-station');
+              setIsNavigationOpen(false);
+            }}
+            className="w-full justify-start h-12 text-lg"
+            variant={currentMode === 'gas-station' ? 'default' : 'outline'}
+          >
+            Čerpací stanice
+          </Button>
+          <Button 
+            onClick={() => {
+              setCurrentMode('fault-reporting');
+              setIsNavigationOpen(false);
+            }}
+            className="w-full justify-start h-12 text-lg"
+            variant={currentMode === 'fault-reporting' ? 'default' : 'outline'}
+          >
+            Hlášení závad
+          </Button>
+          <Button 
+            onClick={() => {
+              setCurrentMode('transport-contacts');
+              setIsNavigationOpen(false);
+            }}
+            className="w-full justify-start h-12 text-lg"
+            variant={currentMode === 'transport-contacts' ? 'default' : 'outline'}
+          >
+            Doprava - Kontakty
+          </Button>
+          {user?.role === 'admin' && (
             <Button 
               onClick={() => {
-                setCurrentMode('shifts');
+                setCurrentMode('user-management');
                 setIsNavigationOpen(false);
               }}
               className="w-full justify-start h-12 text-lg"
-              variant={currentMode === 'shifts' ? 'default' : 'outline'}
+              variant={currentMode === 'user-management' ? 'default' : 'outline'}
             >
-              Směny
+              <Users className="h-4 w-4 mr-2" />
+              Správa uživatelů
             </Button>
-            <Button 
-              onClick={() => {
-                setCurrentMode('entry');
-                setIsNavigationOpen(false);
-              }}
-              className="w-full justify-start h-12 text-lg"
-              variant={currentMode === 'entry' ? 'default' : 'outline'}
-            >
-              Karta řidiče
-            </Button>
-            <Button 
-              onClick={() => {
-                setCurrentMode('time-tracking');
-                setIsNavigationOpen(false);
-              }}
-              className="w-full justify-start h-12 text-lg"
-              variant={currentMode === 'time-tracking' ? 'default' : 'outline'}
-            >
-              Odpracované hodiny
-            </Button>
-            <Button 
-              onClick={() => {
-                setCurrentMode('consumption-record');
-                setIsNavigationOpen(false);
-              }}
-              className="w-full justify-start h-12 text-lg"
-              variant={currentMode === 'consumption-record' ? 'default' : 'outline'}
-            >
-              Záznam spotřeby
-            </Button>
-            <Button 
-              onClick={() => {
-                setCurrentMode('gas-station');
-                setIsNavigationOpen(false);
-              }}
-              className="w-full justify-start h-12 text-lg"
-              variant={currentMode === 'gas-station' ? 'default' : 'outline'}
-            >
-              Čerpací stanice
-            </Button>
-            <Button 
-              onClick={() => {
-                setCurrentMode('fault-reporting');
-                setIsNavigationOpen(false);
-              }}
-              className="w-full justify-start h-12 text-lg"
-              variant={currentMode === 'fault-reporting' ? 'default' : 'outline'}
-            >
-              Hlášení závad
-            </Button>
-            <Button 
-              onClick={() => {
-                setCurrentMode('transport-contacts');
-                setIsNavigationOpen(false);
-              }}
-              className="w-full justify-start h-12 text-lg"
-              variant={currentMode === 'transport-contacts' ? 'default' : 'outline'}
-            >
-              Doprava - Kontakty
-            </Button>
-            {user?.role === 'admin' && (
-              <Button 
-                onClick={() => {
-                  setCurrentMode('user-management');
-                  setIsNavigationOpen(false);
-                }}
-                className="w-full justify-start h-12 text-lg"
-                variant={currentMode === 'user-management' ? 'default' : 'outline'}
-              >
-                <Users className="h-4 w-4 mr-2" />
-                Správa uživatelů
-              </Button>
-            )}
-            <Button 
-              onClick={() => {
-                setCurrentMode(null);
-                setIsNavigationOpen(false);
-              }}
-              className="w-full justify-start h-12 text-lg mt-4"
-              variant="outline"
-            >
-              🏠 Hlavní stránka
-            </Button>
-          </div>
+          )}
         </div>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 
   // Main render logic

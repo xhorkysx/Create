@@ -34,7 +34,7 @@ export function ConsumptionChart({ entries, currentMonth }: ConsumptionChartProp
   
   if (monthlyEntries.length === 0) {
     return (
-      <Card>
+      <Card className="relative z-10">
         <CardHeader>
           <CardTitle>
             Graf spotřeby - {currentMonth.toLocaleDateString('cs-CZ', { month: 'long', year: 'numeric' })}
@@ -75,7 +75,7 @@ export function ConsumptionChart({ entries, currentMonth }: ConsumptionChartProp
   
 
   return (
-    <Card>
+    <Card className="relative z-10">
       <CardHeader>
         <CardTitle>
           Graf spotřeby - {currentMonth.toLocaleDateString('cs-CZ', { month: 'long', year: 'numeric' })}
@@ -132,13 +132,13 @@ export function ConsumptionChart({ entries, currentMonth }: ConsumptionChartProp
                       right: 0,
                       height: '1px',
                       backgroundColor: '#e5e7eb',
-                      zIndex: 1
+                      zIndex: 0
                     }}
                   />
                 ))}
                 
                 {/* Combined chart - bars for kilometers and line for consumption */}
-                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 2, display: 'flex', alignItems: 'flex-end', padding: '0 2px' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1, display: 'flex', alignItems: 'flex-end', padding: '0 2px' }}>
                   {/* Bars for kilometers - scaled to fit in bottom 30% of chart */}
                   {allEntries.map((entry, index) => {
                     const barHeight = (entry.kilometers / maxKilometers) * 30; // Max 30% of chart height
@@ -179,7 +179,7 @@ export function ConsumptionChart({ entries, currentMonth }: ConsumptionChartProp
                 </div>
                 
                 {/* Line chart for consumption */}
-                <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 3 }} viewBox="0 0 100 100" preserveAspectRatio="none">
+                <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 2 }} viewBox="0 0 100 100" preserveAspectRatio="none">
                   {/* Line connecting points */}
                   <polyline
                     fill="none"
