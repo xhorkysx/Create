@@ -11,12 +11,14 @@ import { ShiftsInfo } from './components/ShiftsInfo';
 import { ConsumptionDialog } from './components/ConsumptionDialog';
 import { ConsumptionCalendar } from './components/ConsumptionCalendar';
 import { ConsumptionChart } from './components/ConsumptionChart';
+import { UserManagement } from './components/UserManagement';
 import { Button } from './components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
-import { Download, Upload, Database, ChevronLeft, Home, Menu } from 'lucide-react';
+import { Download, Upload, Database, ChevronLeft, Home, Menu, Users } from 'lucide-react';
 import { useIsMobile } from './components/ui/use-mobile';
 import { apiService } from './services/api';
 import { realtimeService } from './services/realtime';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 interface TimeEntry {
   id: string;
@@ -44,19 +46,18 @@ interface AppData {
   realSalaries: { [key: string]: number };
 }
 
-export default function App() {
+function AppContent() {
+  const { user, isAuthenticated } = useAuth();
   const isMobile = useIsMobile();
-  const [currentMode, setCurrentMode] = useState<'entry' | 'time-tracking' | 'shifts' | 'transport-contacts' | 'consumption-record' | 'gas-station' | 'fault-reporting' | null>(null);
-  const [entries, setEntries] = useState<TimeEntry[]>([]);
-  const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
+  const [currentMode, setCurrentMode] = useState(null);
+  const [entries, setEntries] = useState([]);
+  const [editingEntry, setEditingEntry] = useState(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [defaultHourlyRate, setDefaultHourlyRate] = useState(250);
-  const [realSalaries, setRealSalaries] = useState<{ [key: string]: number }>({});
+  const [realSalaries, setRealSalaries] = useState({});
   const [dbInitialized, setDbInitialized] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [realtimeStatus, setRealtimeStatus] = useState({ isConnected: false, usePolling: false });
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentUser, setCurrentUser] = useState<string>('');
   const [isInDriverCardSection, setIsInDriverCardSection] = useState(false);
   const [isNavigationOpen, setIsNavigationOpen] = useState(false);
   
@@ -71,10 +72,10 @@ export default function App() {
   }, [isNavigationOpen, isMobile]);
   
   // Consumption record states
-  const [consumptionEntries, setConsumptionEntries] = useState<ConsumptionEntry[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [consumptionEntries, setConsumptionEntries] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [isConsumptionDialogOpen, setIsConsumptionDialogOpen] = useState(false);
-  const [editingConsumption, setEditingConsumption] = useState<ConsumptionEntry | null>(null);
+  const [editingConsumption, setEditingConsumption] = useState(null);
 
   // Load time entries from database
   const loadTimeEntries = async () => {
@@ -116,8 +117,6 @@ export default function App() {
       // Load other data from localStorage
       const savedRate = localStorage.getItem('defaultHourlyRate');
       const savedSalaries = localStorage.getItem('realSalaries');
-      const savedLoginState = localStorage.getItem('isLoggedIn');
-      const savedUser = localStorage.getItem('currentUser');
       
       if (savedRate) {
         setDefaultHourlyRate(parseInt(savedRate));
@@ -129,12 +128,6 @@ export default function App() {
         } catch (error) {
           console.error('Error loading salaries:', error);
         }
-      }
-
-      // Load login state
-      if (savedLoginState === 'true' && savedUser) {
-        setIsLoggedIn(true);
-        setCurrentUser(savedUser);
       }
 
       // Connect to real-time service
@@ -194,7 +187,7 @@ export default function App() {
   }, []);
 
 
-  const addEntry = async (entryData: Omit<TimeEntry, 'id' | 'earnings'>) => {
+  const addEntry = async (entryData) => {
     if (dbInitialized) {
       try {
         await apiService.addTimeEntry(entryData);
@@ -203,7 +196,7 @@ export default function App() {
       } catch (error) {
         console.error('Error adding entry to database:', error);
         // Fallback to localStorage
-        const newEntry: TimeEntry = {
+        const newEntry = {
           ...entryData,
           id: Date.now().toString(),
           earnings: entryData.hours * entryData.hourlyRate
@@ -211,7 +204,7 @@ export default function App() {
         setEntries(prev => [newEntry, ...prev]);
       }
     } else {
-      const newEntry: TimeEntry = {
+      const newEntry = {
         ...entryData,
         id: Date.now().toString(),
         earnings: entryData.hours * entryData.hourlyRate
@@ -241,12 +234,12 @@ export default function App() {
     }
   };
 
-  const editEntry = (entry: TimeEntry) => {
+  const editEntry = (entry) => {
     setEditingEntry(entry);
     setIsEditDialogOpen(true);
   };
 
-  const saveEditedEntry = async (updatedEntry: TimeEntry) => {
+  const saveEditedEntry = async (updatedEntry) => {
     if (dbInitialized) {
       try {
         await apiService.updateTimeEntry(updatedEntry.id, updatedEntry);
@@ -295,14 +288,14 @@ export default function App() {
   };
 
 
-  const saveConsumptionEntry = async (entry: Omit<ConsumptionEntry, 'id'>) => {
+  const saveConsumptionEntry = async (entry) => {
     try {
       console.log('saveConsumptionEntry called with:', entry);
       console.log('editingConsumption:', editingConsumption);
       
       if (editingConsumption) {
         // Update existing entry
-        const updatedEntry: ConsumptionEntry = {
+        const updatedEntry = {
           ...entry,
           id: editingConsumption.id
         };
@@ -317,7 +310,7 @@ export default function App() {
         
       } else {
         // Create new entry
-        const newEntry: ConsumptionEntry = {
+        const newEntry = {
           ...entry,
           id: Date.now().toString()
         };
@@ -354,40 +347,11 @@ export default function App() {
     }
   };
 
-  // Login/Logout functions
-  const handleLogin = async (username: string, password: string) => {
-    // Prozatím jednoduchá autentifikace - v produkci by měla být bezpečnější
-    if (username === 'admin' && password === 'admin') {
-      setIsLoggedIn(true);
-      setCurrentUser(username);
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('currentUser', username);
-      return;
-    }
-    
-    // Zkusíme další testovací účty
-    if (username === 'user' && password === 'user') {
-      setIsLoggedIn(true);
-      setCurrentUser(username);
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('currentUser', username);
-      return;
-    }
-    
-    throw new Error('Neplatné přihlašovací údaje');
-  };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setCurrentUser('');
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('currentUser');
-  };
-
-  const addVacationHours = (monthKey: string, hours: number) => {
+  const addVacationHours = (monthKey, hours) => {
     const [year, month] = monthKey.split('-');
     const hoursNum = parseFloat(hours.toString());
-    const vacationEntry: TimeEntry = {
+    const vacationEntry = {
       id: Date.now().toString(),
       date: `${year}-${(parseInt(month) + 1).toString().padStart(2, '0')}-01`,
       hours: hoursNum,
@@ -415,7 +379,7 @@ export default function App() {
 
   // Export data to JSON file
   const exportData = () => {
-    const data: AppData = {
+    const data = {
       entries,
       defaultHourlyRate,
       realSalaries
@@ -435,14 +399,14 @@ export default function App() {
   };
 
   // Import data from JSON file
-  const importData = (event: any) => {
+  const importData = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const data: AppData = JSON.parse(e.target?.result as string);
+        const data = JSON.parse(String(e.target?.result || '{}'));
         
         if (data.entries) setEntries(data.entries);
         if (data.defaultHourlyRate) setDefaultHourlyRate(data.defaultHourlyRate);
@@ -487,10 +451,7 @@ export default function App() {
             <CEPROLogo />
             <DispatcherInfo />
             <LoginButton 
-              isLoggedIn={isLoggedIn}
-              currentUser={currentUser}
-              onLogin={handleLogin}
-              onLogout={handleLogout}
+              showRegisterButton={user?.role === 'admin'}
             />
           </div>
           
@@ -572,6 +533,16 @@ export default function App() {
           >
             Doprava - Kontakty
           </Button>
+          {user?.role === 'admin' && (
+            <Button 
+              onClick={() => setCurrentMode('user-management')}
+              size="lg"
+              className="w-full h-16 text-lg"
+            >
+              <Users className="h-5 w-5 mr-2" />
+              Správa uživatelů
+            </Button>
+          )}
         </div>
         
         {!dbInitialized && (
@@ -799,11 +770,11 @@ export default function App() {
   const ConsumptionRecordMode = () => {
     const [currentChartMonth, setCurrentChartMonth] = useState(new Date());
     
-    const handleDateSelect = (date: Date) => {
+    const handleDateSelect = (date) => {
       setSelectedDate(date);
     };
 
-    const handleAddConsumption = (dateString: string) => {
+    const handleAddConsumption = (dateString) => {
       // Parse dateString as local date to avoid timezone issues
       const [year, month, day] = dateString.split('-').map(Number);
       setSelectedDate(new Date(year, month - 1, day));
@@ -811,12 +782,12 @@ export default function App() {
       setEditingConsumption(null);
     };
 
-    const handleEditConsumption = (entry: ConsumptionEntry) => {
+    const handleEditConsumption = (entry) => {
       setEditingConsumption(entry);
       setIsConsumptionDialogOpen(true);
     };
 
-    const handleMonthChange = (month: Date) => {
+    const handleMonthChange = (month) => {
       setCurrentChartMonth(month);
     };
 
@@ -877,7 +848,7 @@ export default function App() {
             setIsConsumptionDialogOpen(false);
             setEditingConsumption(null);
           }}
-          onSave={(entry: Omit<ConsumptionEntry, 'id'>) => saveConsumptionEntry(entry)}
+          onSave={(entry) => saveConsumptionEntry(entry)}
           selectedDate={selectedDate.getFullYear() + '-' + 
             String(selectedDate.getMonth() + 1).padStart(2, '0') + '-' + 
             String(selectedDate.getDate()).padStart(2, '0')}
@@ -995,6 +966,40 @@ export default function App() {
     </div>
   );
 
+  // User management mode component
+  const UserManagementMode = () => (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-2">
+            {isMobile && (
+              <button
+                onClick={toggleNavigation}
+                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
+                title={isNavigationOpen ? "Zavřít navigaci" : "Otevřít navigaci"}
+              >
+                <Menu className="h-6 w-6 text-gray-600" />
+              </button>
+            )}
+            <button
+              onClick={() => setCurrentMode(null)}
+                    className="p-2 hover:bg-gray-100 rounded transition-colors border border-gray-300 relative z-50"
+              title="Zpět na výběr"
+            >
+              <Home className="h-6 w-6 text-gray-600" />
+            </button>
+            <h1>Správa uživatelů</h1>
+          </div>
+          <p className="text-muted-foreground">
+            Vytváření a správa uživatelských účtů
+          </p>
+        </div>
+        
+        <UserManagement />
+      </div>
+    </div>
+  );
+
 
   // Navigation panel component
   const NavigationPanel = () => (
@@ -1073,6 +1078,19 @@ export default function App() {
             >
               Doprava - Kontakty
             </Button>
+            {user?.role === 'admin' && (
+              <Button 
+                onClick={() => {
+                  setCurrentMode('user-management');
+                  setIsNavigationOpen(false);
+                }}
+                className="w-full justify-start h-12 text-lg"
+                variant={currentMode === 'user-management' ? 'default' : 'outline'}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Správa uživatelů
+              </Button>
+            )}
             <Button 
               onClick={() => {
                 setCurrentMode(null);
@@ -1162,6 +1180,23 @@ export default function App() {
     );
   }
 
+  if (currentMode === 'user-management') {
+    return (
+      <>
+        <UserManagementMode />
+        {isNavigationOpen && <NavigationPanel />}
+      </>
+    );
+  }
+
 
   return <EntryScreen />;
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
 }

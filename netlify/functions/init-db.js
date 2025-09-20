@@ -1,6 +1,6 @@
-import { neon } from '@netlify/neon';
+const { neon } = require('@netlify/neon');
 
-export const handler = async (event, context) => {
+exports.handler = async (event, context) => {
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -15,6 +15,7 @@ export const handler = async (event, context) => {
     await sql`
       CREATE TABLE IF NOT EXISTS time_entries (
         id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
         date DATE NOT NULL,
         hours DECIMAL(5,2) NOT NULL,
         hourly_rate DECIMAL(8,2) NOT NULL,
@@ -24,6 +25,12 @@ export const handler = async (event, context) => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
+    `;
+
+    // Přidání user_id sloupce do existující tabulky (pokud neexistuje)
+    await sql`
+      ALTER TABLE time_entries 
+      ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE
     `;
 
     // Vytvoření tabulky pro dokumenty řidiče
@@ -37,6 +44,19 @@ export const handler = async (event, context) => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(document_type, document_name)
+      )
+    `;
+
+    // Vytvoření tabulky pro uživatele
+    await sql`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(50) UNIQUE NOT NULL,
+        email VARCHAR(100) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        role VARCHAR(20) DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `;
 
@@ -92,6 +112,16 @@ export const handler = async (event, context) => {
       ON CONFLICT (setting_key) DO NOTHING
     `;
 
+    // Vytvoření výchozího administrátorského účtu (heslo: admin123)
+    const bcrypt = require('bcryptjs');
+    const adminPasswordHash = await bcrypt.hash('admin123', 12);
+    
+    await sql`
+      INSERT INTO users (username, email, password_hash, role)
+      VALUES ('admin', 'admin@company.com', ${adminPasswordHash}, 'admin')
+      ON CONFLICT (username) DO NOTHING
+    `;
+
     return {
       statusCode: 200,
       headers: {
@@ -102,7 +132,7 @@ export const handler = async (event, context) => {
       },
       body: JSON.stringify({ 
         message: 'Database initialized successfully',
-        tables: ['time_entries', 'driver_documents', 'app_settings']
+        tables: ['users', 'time_entries', 'driver_documents', 'app_settings']
       })
     };
 

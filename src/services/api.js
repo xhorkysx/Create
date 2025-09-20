@@ -3,6 +3,7 @@
 import { realtimeService } from './realtime.js';
 import { mockApiService } from './mockApi.js';
 import { shouldUseMockApi } from '../config/api.js';
+import { authService } from './auth.js';
 
 const API_BASE = '/.netlify/functions';
 
@@ -89,9 +90,15 @@ class ApiService {
       return await mockApiService.getTimeEntries();
     }
     try {
-      const response = await fetch(`${API_BASE}/time-entries`);
+      const response = await fetch(`${API_BASE}/time-entries`, {
+        headers: authService.getAuthHeaders()
+      });
       
       if (!response.ok) {
+        if (response.status === 401) {
+          authService.logout();
+          throw new Error('Session expired. Please log in again.');
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
@@ -109,13 +116,15 @@ class ApiService {
     try {
       const response = await fetch(`${API_BASE}/time-entries`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: authService.getAuthHeaders(),
         body: JSON.stringify(entryData),
       });
       
       if (!response.ok) {
+        if (response.status === 401) {
+          authService.logout();
+          throw new Error('Session expired. Please log in again.');
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
@@ -138,9 +147,7 @@ class ApiService {
     try {
       const response = await fetch(`${API_BASE}/time-entries`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: authService.getAuthHeaders(),
         body: JSON.stringify({
           id,
           ...entryData
@@ -148,6 +155,10 @@ class ApiService {
       });
       
       if (!response.ok) {
+        if (response.status === 401) {
+          authService.logout();
+          throw new Error('Session expired. Please log in again.');
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
@@ -170,9 +181,14 @@ class ApiService {
     try {
       const response = await fetch(`${API_BASE}/time-entries?id=${id}`, {
         method: 'DELETE',
+        headers: authService.getAuthHeaders()
       });
       
       if (!response.ok) {
+        if (response.status === 401) {
+          authService.logout();
+          throw new Error('Session expired. Please log in again.');
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       

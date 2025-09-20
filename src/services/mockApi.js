@@ -178,6 +178,27 @@ class MockApiService {
         isVacation: false
       }
     ];
+
+    // Mock uživatelé
+    this.mockUsers = [
+      {
+        id: '1',
+        username: 'admin',
+        email: 'admin@company.com',
+        role: 'admin',
+        createdAt: '2024-01-01T00:00:00Z'
+      },
+      {
+        id: '2',
+        username: 'user',
+        email: 'user@company.com',
+        role: 'user',
+        createdAt: '2024-01-02T00:00:00Z'
+      }
+    ];
+
+    // Aktuálně přihlášený uživatel
+    this.currentUser = null;
   }
 
   // DOKUMENTY API
@@ -251,12 +272,128 @@ class MockApiService {
     return { message: 'Time entry deleted successfully' };
   }
 
+  // AUTENTIFIKACE API
+  async login(username, password) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Mock přihlášení - jednoduché ověření
+    const user = this.mockUsers.find(u => 
+      u.username === username && 
+      ((username === 'admin' && password === 'admin123') || 
+       (username === 'user' && password === 'user123'))
+    );
+    
+    if (!user) {
+      throw new Error('Neplatné přihlašovací údaje');
+    }
+    
+    // Simulace JWT tokenu
+    const token = `mock-jwt-token-${user.id}-${Date.now()}`;
+    this.currentUser = user;
+    
+    return {
+      message: 'Přihlášení úspěšné',
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt
+      }
+    };
+  }
+
+  async register(username, email, password) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Kontrola, zda uživatel již existuje
+    const existingUser = this.mockUsers.find(u => 
+      u.username === username || u.email === email
+    );
+    
+    if (existingUser) {
+      throw new Error('Uživatel s tímto jménem nebo emailem již existuje');
+    }
+    
+    // Vytvoření nového uživatele
+    const newUser = {
+      id: (this.mockUsers.length + 1).toString(),
+      username,
+      email,
+      role: 'user',
+      createdAt: new Date().toISOString()
+    };
+    
+    this.mockUsers.push(newUser);
+    
+    return {
+      message: 'Uživatel byl úspěšně vytvořen',
+      user: newUser
+    };
+  }
+
+  async verifyToken(token) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    if (!token || !token.startsWith('mock-jwt-token-')) {
+      throw new Error('Neplatný token');
+    }
+    
+    // Extrahuj user ID z tokenu
+    const parts = token.split('-');
+    const userId = parts[3];
+    
+    const user = this.mockUsers.find(u => u.id === userId);
+    if (!user) {
+      throw new Error('Uživatel nebyl nalezen');
+    }
+    
+    return {
+      message: 'Token je platný',
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt
+      }
+    };
+  }
+
+  async getUsers() {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    return {
+      users: this.mockUsers.map(user => ({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt
+      }))
+    };
+  }
+
+  async deleteUser(userId) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    const index = this.mockUsers.findIndex(u => u.id === userId);
+    if (index === -1) {
+      throw new Error('Uživatel nebyl nalezen');
+    }
+    
+    this.mockUsers.splice(index, 1);
+    
+    return { message: 'Uživatel byl úspěšně smazán' };
+  }
+
   // Inicializace databáze (mock)
   async initDatabase() {
     await new Promise(resolve => setTimeout(resolve, 1000));
     return { 
       message: 'Database initialized successfully (mock mode)',
-      tables: ['time_entries', 'driver_documents', 'app_settings']
+      tables: ['users', 'time_entries', 'driver_documents', 'app_settings']
     };
   }
 }

@@ -1,12 +1,25 @@
-import { neon } from '@netlify/neon';
+const { neon } = require('@netlify/neon');
+const jwt = require('jsonwebtoken');
 
-export const handler = async (event, context) => {
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+
+// Funkce pro ověření JWT tokenu
+function verifyToken(authHeader) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    throw new Error('No valid token provided');
+  }
+  
+  const token = authHeader.substring(7);
+  return jwt.verify(token, JWT_SECRET);
+}
+
+exports.handler = async (event, context) => {
   const sql = neon();
 
   // CORS headers
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
   };
 
@@ -19,10 +32,27 @@ export const handler = async (event, context) => {
     };
   }
 
+  // Ověření autentifikace pro všechny operace kromě OPTIONS
+  let userId;
+  try {
+    const authHeader = event.headers.authorization || event.headers.Authorization;
+    const decoded = verifyToken(authHeader);
+    userId = decoded.userId;
+  } catch (error) {
+    return {
+      statusCode: 401,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders
+      },
+      body: JSON.stringify({ error: 'Unauthorized', message: 'Invalid or missing token' })
+    };
+  }
+
   try {
     switch (event.httpMethod) {
       case 'GET':
-        // Načtení všech časových záznamů
+        // Načtení časových záznamů pro konkrétního uživatele
         const entries = await sql`
           SELECT 
             id,
@@ -35,6 +65,7 @@ export const handler = async (event, context) => {
             created_at,
             updated_at
           FROM time_entries 
+          WHERE user_id = ${userId}
           ORDER BY date DESC, created_at DESC
         `;
 
@@ -64,8 +95,8 @@ export const handler = async (event, context) => {
         const earnings = hours * hourlyRate;
 
         const result = await sql`
-          INSERT INTO time_entries (date, hours, hourly_rate, earnings, is_holiday, is_vacation)
-          VALUES (${date}, ${hours}, ${hourlyRate}, ${earnings}, ${isHoliday || false}, ${isVacation || false})
+          INSERT INTO time_entries (user_id, date, hours, hourly_rate, earnings, is_holiday, is_vacation)
+          VALUES (${userId}, ${date}, ${hours}, ${hourlyRate}, ${earnings}, ${isHoliday || false}, ${isVacation || false})
           RETURNING id
         `;
 
@@ -87,6 +118,22 @@ export const handler = async (event, context) => {
         const { id, date: updateDate, hours: updateHours, hourlyRate: updateHourlyRate, isHoliday: updateIsHoliday, isVacation: updateIsVacation } = updateData;
         const updateEarnings = updateHours * updateHourlyRate;
 
+        // Ověření, že záznam patří uživateli
+        const existingEntry = await sql`
+          SELECT id FROM time_entries WHERE id = ${id} AND user_id = ${userId}
+        `;
+
+        if (existingEntry.length === 0) {
+          return {
+            statusCode: 404,
+            headers: {
+              'Content-Type': 'application/json',
+              ...corsHeaders
+            },
+            body: JSON.stringify({ error: 'Time entry not found or access denied' })
+          };
+        }
+
         await sql`
           UPDATE time_entries 
           SET 
@@ -97,7 +144,7 @@ export const handler = async (event, context) => {
             is_holiday = ${updateIsHoliday || false},
             is_vacation = ${updateIsVacation || false},
             updated_at = CURRENT_TIMESTAMP
-          WHERE id = ${id}
+          WHERE id = ${id} AND user_id = ${userId}
         `;
 
         return {
@@ -124,9 +171,25 @@ export const handler = async (event, context) => {
           };
         }
 
+        // Ověření, že záznam patří uživateli
+        const entryToDelete = await sql`
+          SELECT id FROM time_entries WHERE id = ${deleteId} AND user_id = ${userId}
+        `;
+
+        if (entryToDelete.length === 0) {
+          return {
+            statusCode: 404,
+            headers: {
+              'Content-Type': 'application/json',
+              ...corsHeaders
+            },
+            body: JSON.stringify({ error: 'Time entry not found or access denied' })
+          };
+        }
+
         await sql`
           DELETE FROM time_entries 
-          WHERE id = ${deleteId}
+          WHERE id = ${deleteId} AND user_id = ${userId}
         `;
 
         return {
